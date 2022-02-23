@@ -1,0 +1,38 @@
+{
+    "include": [
+        "./index.ts",
+        "./scripts"
+    ],
+    "exclude": [
+        "node_modules",
+        "./static",
+        "./dist"
+    ],
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "removeComments": true,
+        "sourceMap": false,
+        "skipLibCheck": true,
+        "outDir": "dist"
+    },
+    "watchOptions": {
+        // Use native file system events for files and directories
+        "watchFile": "useFsEvents",
+        "watchDirectory": "useFsEvents",
+        // Poll files for updates more frequently
+        // when they're updated a lot.
+        "fallbackPolling": "dynamicPriority",
+        // Don't coalesce watch notification
+        "synchronousWatchDirectory": true,
+        // Finally, two additional settings for reducing the amount of possible
+        // files to track  work from these directories
+        "excludeDirectories": [
+            "*/node_modules",
+            "static",
+            "dist"
+        ],
+        "excludeFiles": []
+    }
+}
