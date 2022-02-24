@@ -1,5 +1,6 @@
 //https://github.com/enisdenjo/graphql-ws
 import { GraphQLSchema, GraphQLObjectType, GraphQLString } from "graphql";
+import { setTimeout } from "timers/promises";
 
 /**
  * Construct a GraphQL schema and define the necessary resolvers.
@@ -17,7 +18,9 @@ export const schema = new GraphQLSchema({
         fields: {
             hello: {
                 type: GraphQLString,
-                resolve: () => "world",
+                resolve: () => {
+                    return "world";
+                },
             },
         },
     }),
@@ -27,8 +30,11 @@ export const schema = new GraphQLSchema({
             greetings: {
                 type: GraphQLString,
                 subscribe: async function *() {
-                    for (const hi of ["Hi", "Bonjour", "Hola", "Ciao", "Zdravo"]) {
-                        yield { greetings: hi };
+                    for (let i = 0; i < 3600; i++) {
+                        for (const hi of ["Hi", "Bonjour", "Hola", "Ciao", "Zdravo"]) {
+                            yield { greetings: hi };
+                            await setTimeout(1000);
+                        }
                     }
                 },
             },

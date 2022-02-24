@@ -10,7 +10,8 @@
     ],
     "compilerOptions": {
         "target": "ESNext",
-        "module": "CommonJS",
+        "module": "ESNext",
+        "esModuleInterop": true,
         "moduleResolution": "node",
         "removeComments": true,
         "sourceMap": false,

@@ -1,12 +1,20 @@
-import { schema } from "./schema";
-import { makeBehavior } from "graphql-ws/lib/use/uWebSockets";
-import * as uWS from "uWebSockets.js";
+import { initEnv } from "./utils/env.js";
+import { initLog } from "./utils/logging.js";
+// init
+initEnv();
+initLog();
 
-uWS
-    .App()
-    .ws("/graphql", makeBehavior({ schema }))
-    .listen(4000, (listenSocket) => {
-        if (listenSocket) {
-            console.log("Listening to port 4000");
-        }
-    });
+// start server
+import { getConfig } from "./utils/config.js";
+import { createHttpServer } from "./qqcore/server.js";
+import log4js from "log4js";
+
+const HOST = getConfig("serverHost", "localhost");
+const PORT = getConfig("serverPort", 4000);
+const SERVE_STATIC = getConfig("serverStaticPage", true);
+
+const logger = log4js.getLogger("app");
+const server = createHttpServer(SERVE_STATIC);
+server.listen({ host: HOST, port: PORT }, () => {
+    logger.info(`Listening on ${SERVE_STATIC ? "http://" : ""}${HOST}:${PORT}`);
+});
