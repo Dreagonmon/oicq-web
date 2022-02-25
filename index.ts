@@ -18,3 +18,8 @@ const server = createHttpServer(SERVE_STATIC);
 server.listen({ host: HOST, port: PORT }, () => {
     logger.info(`Listening on ${SERVE_STATIC ? "http://" : ""}${HOST}:${PORT}`);
 });
+
+/* eslint-disable */
+// test below
+
+/* eslint-enable */
