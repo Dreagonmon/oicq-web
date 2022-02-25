@@ -7,11 +7,14 @@ import { fileURLToPath } from "url";
 export const SRC_ROOT = (() => {
     let tmpRoot: string;
     if ((process as any).pkg) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        // for pkg package, from dist/bundle.js
         tmpRoot = dirname((process as any).pkg.entrypoint); // eslint-disable-line @typescript-eslint/no-explicit-any
     } else {
         try {
+            // for dist/bundle.js, as CommonJS
             tmpRoot = dirname(require.main.filename);
         } catch {
+            // for dist/index.js, as ESM
             const __dirname = dirname(fileURLToPath(import.meta.url));
             tmpRoot = normalize(join(__dirname, ".."));
         }
