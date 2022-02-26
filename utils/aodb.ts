@@ -89,19 +89,21 @@ export class AppendOnlyDatabase {
     #lock: PromiseLock;
     #notSyncedCount: number;
     #syncTimerHandler: NodeJS.Timeout;
-    #cache: Array<string>; // string save a lot of memory compare to object
+    #cache: Array<Buffer>; // string save a lot of memory compare to object
     #dataFileHandler: FileHandle;
     #index: AppendOnlyDatabaseIndex;
-    constructor (path: string, cacheSize: number = MAX_CACHE_SIZE, commitSize: number = MAX_CACHE_SIZE) {
+    #useJson: boolean;
+    constructor (path: string, useJson: boolean = true, cacheSize: number = MAX_CACHE_SIZE, commitSize: number = MAX_CACHE_SIZE) {
         this.#path = path;
         this.#cacheSize = cacheSize;
         this.#commitSize = commitSize;
         this.#lock = new PromiseLock();
         this.#notSyncedCount = 0;
         this.#syncTimerHandler = null;
-        this.#cache = new Array<string>(); // only the most recent records are stored in cache 
+        this.#cache = new Array<Buffer>(); // only the most recent records are stored in cache 
         this.#dataFileHandler = undefined;
         this.#index = new AppendOnlyDatabaseIndex(`${path}.index`);
+        this.#useJson = useJson;
     }
     getSize () {
         const savedRecordSize = this.#index.getRecordSize();
@@ -125,8 +127,12 @@ export class AppendOnlyDatabase {
     async addRecord (record: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         await this.#lock.lock();
         try {
-            const data = JSON.stringify(record);
-            this.#cache.push(data);
+            if (this.#useJson) {
+                const data = JSON.stringify(record);
+                this.#cache.push(Buffer.from(data, "utf8"));
+            } else {
+                this.#cache.push(record);
+            }
             this.#notSyncedCount += 1;
             if (this.#notSyncedCount < this.#commitSize) {
                 // cache not full, just set the timer.
@@ -187,7 +193,11 @@ export class AppendOnlyDatabase {
                     if (bytesRead === readLength) {
                         offsetAndLength.forEach(([off, len]) => {
                             const offsetInBuffer = off - startOffset;
-                            result.push(JSON.parse(buffer.toString("utf8", offsetInBuffer + 4, offsetInBuffer + len))); // skip first 4 bytes, they are record size
+                            if (this.#useJson){
+                                result.push(JSON.parse(buffer.toString("utf8", offsetInBuffer + 4, offsetInBuffer + len))); // skip first 4 bytes, they are record size
+                            } else {
+                                result.push(Buffer.from(buffer, offsetInBuffer + 4, len - 4));
+                            }
                         });
                     }
                 }
@@ -197,7 +207,11 @@ export class AppendOnlyDatabase {
             // get record in cache
             const endIndex = indexInCache + length;
             for (let i = indexInCache; i < endIndex; i++) {
-                result.push(JSON.parse(this.#cache.at(i)));
+                if (this.#useJson) {
+                    result.push(JSON.parse(this.#cache.at(i).toString("utf8")));
+                } else {
+                    result.push(this.#cache.at(i));
+                }
             }
             return result;
         } finally {
@@ -213,14 +227,13 @@ export class AppendOnlyDatabase {
             for (let i = startIndex; i < this.#cache.length; i++) {
                 const record = this.#cache.at(i);
                 const baseOffset = this.#index.getLastRecordEndOffset();
-                const buffer = Buffer.from(record, "utf8");
                 const bufferSizeInfo = Buffer.allocUnsafe(4);
-                bufferSizeInfo.writeUInt32BE(buffer.byteLength);
+                bufferSizeInfo.writeUInt32BE(record.byteLength);
                 let writeSize = (await this.#dataFileHandler.write(bufferSizeInfo, 0, 4, baseOffset)).bytesWritten;
                 if (writeSize != 4) throw new Error("AODB write failed!");
-                writeSize = (await this.#dataFileHandler.write(buffer, 0, buffer.byteLength, baseOffset + 4)).bytesWritten;
-                if (writeSize != buffer.byteLength) throw new Error("AODB write failed!");
-                this.#index.addIndex(buffer.byteLength + 4);
+                writeSize = (await this.#dataFileHandler.write(record, 0, record.byteLength, baseOffset + 4)).bytesWritten;
+                if (writeSize != record.byteLength) throw new Error("AODB write failed!");
+                this.#index.addIndex(record.byteLength + 4);
             }
             // flush
             await this.#dataFileHandler.datasync();
