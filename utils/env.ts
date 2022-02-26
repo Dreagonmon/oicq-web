@@ -73,3 +73,11 @@ export const getPathInData = (...paths: string[]) => {
     }
     return path;
 };
+
+export const getPathWithin = (root: string, ...paths: string[]) => {
+    const path = normalize(join(root, ...paths));
+    if (!path.startsWith(root) || !path.startsWith(DATA_ROOT)) {
+        throw new Error(`${path} is out of root path.`);
+    }
+    return path;
+};
