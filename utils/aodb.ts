@@ -11,44 +11,15 @@
  *  - )
  *  - ...
 */
+import { PromiseLock } from "./lock.js";
 import { constants as fsconst } from "fs";
 import { Buffer } from "buffer";
 import { open, access, readFile, writeFile, FileHandle } from "fs/promises";
 import { setTimeout, clearTimeout } from "timers";
 
-type Resolver = (value: unknown) => void;
 const COMMIT_DELAY = 500; // ms
 const MAX_CACHE_SIZE = 128;
 const INDEX_INIT_SIZE = 128;
-
-export const sleep = (time: number) => new Promise(resolve => setTimeout(resolve, time));
-
-class PromiseLock {
-    #locked = false;
-    #waitResolver: Array<Resolver> = new Array<Resolver>();
-    lock () {
-        if (this.#locked) {
-            return new Promise((resolve: Resolver) => {
-                this.#waitResolver.push(resolve);
-            });
-        } else {
-            this.#locked = true;
-            return Promise.resolve(null);
-        }
-    }
-    unlock () {
-        if (this.#locked) {
-            this.#locked = false;
-        }
-        if (this.#waitResolver.length > 0) {
-            this.#locked = true;
-            this.#waitResolver.splice(0, 1)[0](null);
-        }
-    }
-    isLocked () {
-        return this.#locked;
-    }
-}
 
 class AppendOnlyDatabaseIndex {
     #indexPath: string;
