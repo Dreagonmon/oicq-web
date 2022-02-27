@@ -13,7 +13,11 @@ export const SRC_ROOT = (() => {
     } else {
         try {
             // for dist/bundle.js, as CommonJS
-            tmpRoot = dirname(require.main.filename);
+            if (require.main) {
+                tmpRoot = dirname(require.main.filename);
+            } else {
+                throw Error("silly typecheck!");
+            }
         } catch {
             // for dist/index.js, as ESM
             const __dirname = dirname(fileURLToPath(import.meta.url));

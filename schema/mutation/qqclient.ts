@@ -16,9 +16,9 @@ export const LoginInput: GraphQLFieldConfigArgumentMap = {
     userPass: { type: GraphQLString },
 };
 
-export const loginResolver: GraphQLFieldResolver<undefined, ContextWithExtra, LoginArgs, Promise<QQClient>> = async (src, args, ctx) => {
+export const loginResolver: GraphQLFieldResolver<undefined, ContextWithExtra, LoginArgs, Promise<QQClient | null | undefined>> = async (src, args, ctx) => {
     try {
-        const qid = Number.parseInt(args?.qid);
+        const qid = args?.qid ? Number.parseInt(args.qid) : NaN;
         if (!(args?.userPass) || Number.isNaN(qid)) {
             return null; // require userPadd and qid.
         }

@@ -15,7 +15,7 @@ import { registerBeforeExit } from "./utils/atexit.js";
 const HOST = getConfig("serverHost", "localhost");
 const PORT = getConfig("serverPort", 4000);
 const SERVE_STATIC = getConfig("serverStaticPage", true);
-const server = createHttpServer(SERVE_STATIC);
+const server = createHttpServer(SERVE_STATIC === true);
 registerBeforeExit(() => {
     server.close();
 });

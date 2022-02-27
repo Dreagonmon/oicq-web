@@ -101,8 +101,8 @@ export const initQQClientModule = () => {
 };
 
 export const getQQClient = (qid: number) => {
-    if (clientMap.has(qid)) {
-        const qclient = clientMap.get(qid);
+    const qclient = clientMap.get(qid);
+    if (qclient) {
         qclient.accessTime = Date.now() / 1_000;
         return qclient;
     } else {

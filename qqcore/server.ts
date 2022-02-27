@@ -21,7 +21,7 @@ const server_options: ServerOptionsWithExtra = {
         if (client && client.checkUserPass(ctx.connectionParams?.userPass as string)) {
             ctx.extra.qclient = client;
         } else {
-            ctx.extra.qclient = null;
+            ctx.extra.qclient = undefined;
         }
         // console.log(ctx.connectionParams["Authorization"]);
         return true;
@@ -29,6 +29,10 @@ const server_options: ServerOptionsWithExtra = {
 };
 
 const static_file_handler: (req: IncomingMessage, res: ServerResponse) => Promise<void> = async (req, res) => {
+    if (!req.url) {
+        res.end();
+        return;
+    }
     const url = new URL(req.url, `http://${req.headers.host}`);
     const parts = url.pathname.split("/").filter((val) => val?.length && val.length > 0);
     if (parts.length <= 0) {

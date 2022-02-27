@@ -1,4 +1,4 @@
-const mimes = {
+const mimes: Record<string, string> = {
     "3gp": "video/3gpp",
     a: "application/octet-stream",
     ai: "application/postscript",
@@ -170,5 +170,6 @@ const mimes = {
 
 export const getMime = (path: string): string => {
     const i = path.lastIndexOf(".");
-    return mimes[path.substring(i + 1).toLowerCase()] ?? mimes["default"];
+    const ext = path.substring(i + 1).toLowerCase();
+    return mimes[ext] ?? mimes["default"];
 };

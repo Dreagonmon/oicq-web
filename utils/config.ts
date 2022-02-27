@@ -4,7 +4,7 @@ import * as hjson from "hjson";
 import log4js from "log4js";
 
 const logger = log4js.getLogger("config");
-let configDB: object = undefined;
+let configDB: Record<string, unknown> | undefined = undefined;
 
 const initDB = () => {
     try {
@@ -16,7 +16,7 @@ const initDB = () => {
     }
 };
 
-export const getConfig: <T>(key: string, fallback?: T) => T = (key, fallback) => {
+export const getConfig: (key: string, fallback: unknown) => unknown = (key, fallback) => {
     if (configDB === undefined) {
         initDB();
     }

@@ -1,8 +1,25 @@
-
 module.exports = {
+    "root": true,
+    "env": {
+        "browser": true,
+        "node": false
+    },
+    "parserOptions": {
+        "ecmaVersion": 10,
+        "sourceType": "module"
+    },
+    "ignorePatterns": [
+        "/build",
+        "node_modules",
+        "package.json"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+        "@typescript-eslint"
+    ],
     "extends": [
-        "react-app",
-        "react-app/jest"
+        "preact",
+        "plugin:@typescript-eslint/recommended"
     ],
     "rules": {
         "array-bracket-newline": [
