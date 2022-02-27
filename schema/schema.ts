@@ -4,7 +4,7 @@ import { QQClient } from "./types/qqclient.js";
 import {
     loginResolver as mQQClientLoginResolver,
     logoutResolver as mQQClientLogoutResolver,
-    LoginInput as MQQClientLoginInput
+    LoginInput as MQQClientLoginInput,
 } from "./mutation/qqclient.js";
 import { setTimeout } from "timers/promises";
 

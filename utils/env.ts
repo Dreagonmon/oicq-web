@@ -106,4 +106,4 @@ export const clearDirPromise = async (path: string) => {
         }
         await fsp.rm(file, { recursive: true });
     }
-}
+};

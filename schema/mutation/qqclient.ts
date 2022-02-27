@@ -18,7 +18,6 @@ export const LoginInput: GraphQLFieldConfigArgumentMap = {
 
 export const loginResolver: GraphQLFieldResolver<undefined, ContextWithExtra, LoginArgs, Promise<QQClient>> = async (src, args, ctx) => {
     try {
-
         const qid = Number.parseInt(args?.qid);
         if (!(args?.userPass) || Number.isNaN(qid)) {
             return null; // require userPadd and qid.
@@ -65,13 +64,13 @@ export const loginResolver: GraphQLFieldResolver<undefined, ContextWithExtra, Lo
 export const logoutResolver: GraphQLFieldResolver<undefined, ContextWithExtra, LoginArgs, Promise<boolean>> = async (src, args, ctx) => {
     if (ctx.extra?.qclient) {
         // only logout when authed.
-        let qid = ctx.extra.qclient?.client?.uin;
+        const qid = ctx.extra.qclient?.client?.uin;
         try {
             await ctx.extra.qclient.close();
-        } catch (e) { console.error(e) };
+        } catch (e) { console.error(e); }
         ctx.extra.qclient = undefined;
         removeQQClient(qid);
         return true;
     }
     return false;
-}
+};

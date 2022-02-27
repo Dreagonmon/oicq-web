@@ -53,15 +53,15 @@ export class QQClient {
         if (this.storage.data.userPass && this.storage.data.userPass !== this.userPass) {
             // 检查userPass是否发生变化，如变化则清空用户文件夹(为了安全)
             await clearDirPromise(this.client.dir);
-            logger.debug(`${this.client.dir} cleared.`)
+            logger.debug(`${this.client.dir} cleared.`);
         }
         this.storage.data.userPass = this.userPass;
-        const thisRef = this;
+        const extra = this.extra;
         // 注册登录事件
-        this.client.on("system.login.qrcode", (evt) => { thisRef.extra.loginImage = evt.image; });
-        this.client.on("system.login.slider", () => { thisRef.extra.loginError = "请使用扫码登录!"; });
-        this.client.on("system.login.device", () => { thisRef.extra.loginError = "请使用扫码登录!"; });
-        this.client.on("system.login.error", (evt) => { thisRef.extra.loginError = evt.message; });
+        this.client.on("system.login.qrcode", (evt) => { extra.loginImage = evt.image; });
+        this.client.on("system.login.slider", () => { extra.loginError = "请使用扫码登录!"; });
+        this.client.on("system.login.device", () => { extra.loginError = "请使用扫码登录!"; });
+        this.client.on("system.login.error", (evt) => { extra.loginError = evt.message; });
     }
     async close () {
         try {
@@ -112,7 +112,7 @@ export const getQQClient = (qid: number) => {
 
 export const removeQQClient = (qid: number) => {
     if (clientMap.has(qid)) {
-       clientMap.delete(qid);
+        clientMap.delete(qid);
         return true;
     } else {
         return false;
