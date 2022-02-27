@@ -1,18 +1,28 @@
 //https://github.com/enisdenjo/graphql-ws
-import { GraphQLSchema, GraphQLObjectType, GraphQLString } from "graphql";
+import { GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLBoolean } from "graphql";
+import { QQClient } from "./types/qqclient.js";
+import {
+    loginResolver as mQQClientLoginResolver,
+    logoutResolver as mQQClientLogoutResolver,
+    LoginInput as MQQClientLoginInput
+} from "./mutation/qqclient.js";
 import { setTimeout } from "timers/promises";
 
-/**
- * Construct a GraphQL schema and define the necessary resolvers.
- *
- * type Query {
- *   hello: String
- * }
- * type Subscription {
- *   greetings: String
- * }
- */
 export const schema = new GraphQLSchema({
+    mutation: new GraphQLObjectType({
+        name: "Mutation",
+        fields: {
+            login: {
+                type: QQClient,
+                args: MQQClientLoginInput,
+                resolve: mQQClientLoginResolver,
+            },
+            logout: {
+                type: GraphQLBoolean,
+                resolve: mQQClientLogoutResolver,
+            },
+        },
+    }),
     query: new GraphQLObjectType({
         name: "Query",
         fields: {

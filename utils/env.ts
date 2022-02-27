@@ -1,5 +1,6 @@
 import { normalize, join, basename, dirname } from "path";
 import { statSync, mkdirSync, rmSync, chmodSync, constants, PathLike } from "fs";
+import * as fsp from "fs/promises";
 // __dirname in esm
 import { fileURLToPath } from "url";
 // end
@@ -81,3 +82,28 @@ export const getPathWithin = (root: string, ...paths: string[]) => {
     }
     return path;
 };
+
+export const ensureDirPromise = async (path: PathLike) => {
+    try {
+        const stat = await fsp.stat(path);
+        if (!stat.isDirectory()) {
+            await fsp.rm(path);
+            await fsp.mkdir(path, { recursive: true });
+        }
+        if (!isOwnerControlable(stat.mode)) {
+            await fsp.chmod(path, constants.S_IRUSR | constants.S_IWUSR);
+        }
+    } catch {
+        await fsp.mkdir(path, { recursive: true });
+    }
+};
+
+export const clearDirPromise = async (path: string) => {
+    for (const f of await fsp.readdir(path)) {
+        const file = join(path, f);
+        if (!file.startsWith(path) || !file.startsWith(DATA_ROOT)) {
+            throw new Error(`${file} is out of root path.`);
+        }
+        await fsp.rm(file, { recursive: true });
+    }
+}

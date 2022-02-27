@@ -50,10 +50,10 @@
     let activeSocket, timedOut;
     const wsClient = graphqlWs.createClient({
       url: "ws://localhost:4000/graphql",
-      lazy: true, // connect as soon as the page opens
-      keepAlive: 60_000,
+      lazy: true,
+      keepAlive: 60_000, // ack time
       connectionAckWaitTimeout: RESPONSE_TIMEOUT,
-      lazyCloseTimeout: 30_000,
+      lazyCloseTimeout: 3600_000, // keep connection
       retryAttempts: 3,
       connectionParams: () => {
         return {

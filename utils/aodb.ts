@@ -93,7 +93,7 @@ export class AppendOnlyDatabase {
     #dataFileHandler: FileHandle;
     #index: AppendOnlyDatabaseIndex;
     #useJson: boolean;
-    constructor (path: string, useJson: boolean = true, cacheSize: number = MAX_CACHE_SIZE, commitSize: number = MAX_CACHE_SIZE) {
+    constructor (path: string, useJson = true, cacheSize: number = MAX_CACHE_SIZE, commitSize: number = MAX_CACHE_SIZE) {
         this.#path = path;
         this.#cacheSize = cacheSize;
         this.#commitSize = commitSize;
@@ -193,7 +193,7 @@ export class AppendOnlyDatabase {
                     if (bytesRead === readLength) {
                         offsetAndLength.forEach(([off, len]) => {
                             const offsetInBuffer = off - startOffset;
-                            if (this.#useJson){
+                            if (this.#useJson) {
                                 result.push(JSON.parse(buffer.toString("utf8", offsetInBuffer + 4, offsetInBuffer + len))); // skip first 4 bytes, they are record size
                             } else {
                                 result.push(Buffer.from(buffer, offsetInBuffer + 4, len - 4));

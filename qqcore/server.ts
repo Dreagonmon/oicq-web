@@ -1,24 +1,28 @@
-import { schema } from "../schema/schema.js";
-import { getPathInSrc } from "../utils/env.js";
-import { getMime } from "../utils/mime.js";
 import { readFile } from "fs/promises";
 import { createServer, Server, IncomingMessage, ServerResponse } from "http";
 import { ServerOptions } from "graphql-ws";
-import { Extra, useServer } from "graphql-ws/lib/use/ws";
+import { useServer } from "graphql-ws/lib/use/ws";
 import { WebSocketServer } from "ws";
 import { URL } from "url";
+import { schema } from "../schema/schema.js";
+import { getPathInSrc } from "../utils/env.js";
+import { getMime } from "../utils/mime.js";
+import { ContextExtra } from "./context.js";
+import { getQQClient } from "./qqclient.js";
 
-interface ContextExtra extends Extra{
-    qid?: number;
-    verified?: boolean;
-}
 type ServerOptionsWithExtra = ServerOptions<Record<string, unknown>, ContextExtra>;
 
 const server_options: ServerOptionsWithExtra = {
     schema,
+    context: (ctx) => ctx,
     onConnect: (ctx) => {
-        ctx.extra.qid = 0;
-        ctx.extra.verified = false;
+        ctx.extra.qid = (ctx.connectionParams?.qid as number) ?? 0;
+        const client = getQQClient(ctx.extra.qid);
+        if (client && client.checkUserPass(ctx.connectionParams?.userPass as string)) {
+            ctx.extra.qclient = client;
+        } else {
+            ctx.extra.qclient = null;
+        }
         // console.log(ctx.connectionParams["Authorization"]);
         return true;
     },
