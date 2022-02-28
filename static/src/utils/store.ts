@@ -44,6 +44,7 @@ onSet(userPass, ({ newValue }) => {
 });
 onStart(client, () => {
     task(async () => {
+        // TODO: 换成查询专用接口
         const res = await request<GQL_LOGIN_RESULT>(GQL_LOGIN, { qid: qid.get().toString(), userPass: userPass.get() });
         if (res.data && res.data.login && res.data.login.isOnline) {
             client.set(res.data.login);

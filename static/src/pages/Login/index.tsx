@@ -66,8 +66,9 @@ const Login: () => h.JSX.Element = () => {
                         setErrorMsg(res.data.login.loginError);
                     }
                 }
+            } else {
+                setErrorMsg("登录失败, 请检查您的登录信息")
             }
-            console.log(res);
         } finally {
             setLoading(false);
         }
