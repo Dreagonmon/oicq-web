@@ -8793,11 +8793,6 @@ preact-render-to-string@^5.1.20:
   dependencies:
     pretty-format "^3.8.0"
 
-preact-router@^4.0.1:
-  version "4.0.1"
-  resolved "https://mirrors.cloud.tencent.com/npm/preact-router/-/preact-router-4.0.1.tgz#9f04578cbda7939bd15237278159d43d09f962ae"
-  integrity sha512-xPyHVLouc5oKIlKu9iEElplNygJYkOn/vfXfZhcoOFqzfAZHZMmT3FsQb0yyPkdt1rwTLFAxek6/5CFkofocSQ==
-
 preact@^10.6.6:
   version "10.6.6"
   resolved "https://mirrors.tencent.com/npm/preact/-/preact-10.6.6.tgz#f1899bc8dab7c0788b858481532cb3b5d764a520"
