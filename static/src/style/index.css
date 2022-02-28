@@ -18,16 +18,34 @@
 @layer components {
 	/* tooltip */
 	.tooltip {
-		@apply relative cursor-help;
+		@apply relative;
 	}
 	
 	.tooltip:hover::after {
 		content: attr(data-tooltip) ;
 		@apply absolute p-2 top-8 left-0 z-50 rounded border border-black;
-		@apply bg-gray-100 text-black;
+		@apply bg-gray-800 text-white;
 	} 
 
 	.btn {
-		@apply rounded font-sans font-bold p-2;
+		@apply shadow-float rounded-md font-sans font-bold p-2 disabled:opacity-50 disabled:cursor-not-allowed;
+	}
+
+	.btn-primary {
+		@apply  text-white bg-sky-400;
+	}
+
+	.input {
+		box-shadow: inset 4px 4px 2px 0 rgb(0 0 0 / 0.1);
+		@apply border rounded-md p-2 bg-white border-sky-400 w-full;
+	}
+
+	.shadow-float {
+		filter: drop-shadow(4px 4px 2px rgb(0 0 0 / 0.1));
+	}
+
+	.card {
+		@apply shadow-float p-4;
+		@apply bg-gray-50 border rounded border-sky-400;
 	}
 }

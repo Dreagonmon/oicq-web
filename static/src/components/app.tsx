@@ -1,20 +1,19 @@
 import { h } from "preact";
-
-// Code-splitting is automated for `routes` directory
+import { useStore } from "@nanostores/preact";
+import { client as clientStore } from "../utils/store";
 import Header from "./header";
-import Home from "../routes/home";
-import Test from "../routes/test";
+import Login from "../pages/Login";
+// import Test from "../pages/test";
 
-const App = () => (
-    <div id="app" className="w-full h-full">
+const App = () => {
+    const client = useStore(clientStore, { keys: ["isOnline"]});
+    return <div id="app" className="w-full h-full">
         <Header />
-        <div className="pt-16 w-full h-full overflow-auto flex flex-col">
-            <div>
-                <Home />
-                <Test />
-            </div>
+        <div className="pt-16 w-full h-full overflow-hidden flex flex-col bg-gray-100">
+            {client.isOnline ? "登录成功!" : <Login />}
+            {/* <Test /> */}
         </div>
-    </div>
-);
+    </div>;
+};
 
 export default App;

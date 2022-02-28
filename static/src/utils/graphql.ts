@@ -1,8 +1,9 @@
-import { createClient, Client } from "graphql-ws";
+import { createClient, Client, ExecutionResult } from "graphql-ws";
+import { qid, userPass } from "./store";
 
-const RESPONSE_TIMEOUT = 1_000;
-const ACK_INTERVAL = 60_000;
-const IDEL_TIMEOUT = 60_000;
+const RESPONSE_TIMEOUT = 1000;
+const ACK_INTERVAL = 60000;
+const IDEL_TIMEOUT = 60000;
 const RETRY = 3;
 
 let client: undefined | Client;
@@ -25,8 +26,8 @@ const makeClient = () => {
         retryAttempts: RETRY,
         connectionParams: () => {
             return {
-                // TODO: 插入验证信息
-                Authorization: "Bearer Access",
+                qid: qid.get(),
+                userPass: userPass.get(),
             };
         },
         on: {
@@ -57,4 +58,16 @@ export const getClient = () => {
         client = makeClient();
     }
     return client;
+};
+
+export const request = <T>(gql: string, varbs: Record<string, unknown> = {}) => {
+    const client = getClient();
+    return new Promise<ExecutionResult<T>>((resolve, reject) => {
+        let data: ExecutionResult<T>;
+        client.subscribe<T>({ query: gql, variables: varbs }, {
+            next: (val: ExecutionResult<T>) => { data = val; },
+            complete: () => { resolve(data); },
+            error: (err) => { return reject(err); },
+        });
+    });
 };
