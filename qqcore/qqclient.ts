@@ -68,12 +68,13 @@ export class QQClient {
         this.client.on("system.login.slider", () => { extra.loginError = "请使用扫码登录!"; });
         this.client.on("system.login.device", () => { extra.loginError = "请使用扫码登录!"; });
         this.client.on("system.login.error", (evt) => { extra.loginError = evt.message; });
+        this.client.on("system.online", () => { logger.info(`${this.client.uin} 上线`); })
+        this.client.on("system.offline", () => { logger.info(`${this.client.uin} 下线`); })
     }
     async close () {
         try {
             await this.storage.write();
             if (this.client.isOnline()) {
-                logger.debug(`closing ${this.client.uin}`);
                 await this.client.logout(false);
             }
         } catch (e) {

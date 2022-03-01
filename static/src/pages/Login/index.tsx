@@ -6,7 +6,7 @@ import { client as storeClient, qid as storeQid, userPass as storeUserPass } fro
 import { QQClient } from "../../types/QQClient";
 
 const GQL_LOGIN = `
-mutation login($qid: String, $qPass: String, $userPass: String) {
+mutation Login($qid: String, $qPass: String, $userPass: String) {
     login(qid: $qid, qPass: $qPass, userPass: $userPass) {
       id
       qid

@@ -32,7 +32,15 @@
 	}
 
 	.btn-primary {
-		@apply  text-white bg-sky-400;
+		@apply  text-white bg-sky-500;
+	}
+
+	.btn-warning {
+		@apply  text-white bg-orange-500;
+	}
+	
+	.btn-danger {
+		@apply  text-white bg-red-500;
 	}
 
 	.input {
