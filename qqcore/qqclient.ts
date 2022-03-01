@@ -77,6 +77,7 @@ export class QQClient {
             if (this.client.isOnline()) {
                 await this.client.logout(false);
             }
+            logger.info(`${this.client.uin} 已注销`);
         } catch (e) {
             logger.warn(e);
         }
