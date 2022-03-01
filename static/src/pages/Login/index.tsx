@@ -1,4 +1,3 @@
-/* eslint-disable no-alert, no-console, no-unused-vars, no-debugger */
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { changeValue } from "../../utils/htmlevent";
@@ -30,14 +29,14 @@ const Login: () => h.JSX.Element = () => {
     const [loading, setLoading] = useState(false);
 
     const inputHasError = () => {
-        if (!/^\d{6,12}$/.test(qid)) {
+        if (!(/^\d{6,12}$/).test(qid)) {
             return "请输入正确的QQ号, 只支持数字";
         }
-        if (!/^.{6,32}$/.test(userPass)) {
+        if (!(/^.{6,32}$/).test(userPass)) {
             return "请输入正确的用户密码, QQ密码可以留空, 仅在本应用使用";
         }
         return false;
-    }
+    };
 
     const doLogin = async () => {
         const errMsg = inputHasError();
@@ -49,7 +48,7 @@ const Login: () => h.JSX.Element = () => {
         }
         setLoading(true);
         // keep login info before await.
-        const qidAtLogin = Number.parseInt(qid);
+        const qidAtLogin = Number.parseInt(qid, 10);
         const userPassAtLogin = userPass;
         try {
             const res = await request<GQL_LOGIN_RESULT>(GQL_LOGIN, { qid, qPass, userPass });
@@ -67,13 +66,13 @@ const Login: () => h.JSX.Element = () => {
                     }
                 }
             } else {
-                setErrorMsg("登录失败, 请检查您的登录信息")
+                setErrorMsg("登录失败, 请检查您的登录信息");
             }
         } finally {
             setLoading(false);
         }
         //
-    }
+    };
 
     return <div className="w-full h-full flex flex-col items-center">
         <div className="w-full h-full sm:max-w-sm flex sm:items-center sm:overflow-y-auto">
@@ -81,15 +80,15 @@ const Login: () => h.JSX.Element = () => {
                 <div className="flex-none text-lg font-bold pb-2">登录</div>
                 <div className="pt-2 sm:flex-auto">
                     <div className="cursor-pointer w-full tooltip hover:underline" data-tooltip="QQ数字帐号">QQ号</div>
-                    <input className="input" value={qid} onChange={changeValue(setQid)}/>
+                    <input className="input" value={qid} onChange={changeValue(setQid)} />
                 </div>
                 <div className="pt-2 sm:flex-auto">
                     <div className="cursor-pointer w-full tooltip hover:underline" data-tooltip="QQ登录密码, 建议前几次登录留空扫码登录, 长期使用之后再使用密码登录">QQ密码(可选)</div>
-                    <input className="input" type="password" value={qPass} onChange={changeValue(setQPass)}/>
+                    <input className="input" type="password" value={qPass} onChange={changeValue(setQPass)} />
                 </div>
                 <div className="pt-2 sm:flex-auto">
                     <div className="cursor-pointer w-full tooltip hover:underline" data-tooltip="用户自定义密码, 首次登录时设置, 退出QQ再重新登录可以重新设置. 与QQ密码无关, 仅用于多设备验证">用户密码</div>
-                    <input className="input" type="password" value={userPass} onChange={changeValue(setUserPass)}/>
+                    <input className="input" type="password" value={userPass} onChange={changeValue(setUserPass)} />
                 </div>
                 {errorMsg.length > 0 ? <div className="flex-none pt-2 text-red-600">{errorMsg}</div> : null}
                 {qrCode.length > 0 ? <div className="flex-none pt-2 flex flex-col items-center">

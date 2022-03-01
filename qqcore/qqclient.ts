@@ -10,6 +10,8 @@ const logger = log4js.getLogger("qqclient");
 const CLIENT_IDLE_BEFORE_LOGOUT = 259200; // s, 60*60*24*3 = 3d
 const CLIENT_IDLE_BEFORE_CLEAN = 3600; // s
 const CLIENT_IDLE_CHECK_INTERVAL = 60; // s
+const USER_PASS_RETRY_INTERVAL = 300; // s
+const USER_PASS_RETRY_LIMIT = 5; // times
 /* Global QQClient Storage */
 const clientMap: Map<number, QQClient> = new Map();
 /* last clean time */
@@ -32,6 +34,8 @@ export class QQClient {
     accessTime: number; // s, since 1970-01-01 00:00:00 UTC
     userPass: string; // user set password, not qq password
     storage: Low<QQClientStorage>;
+    #lastUserPassFailed: number; //防暴力猜解用户密码
+    #userPassFailedCount: number; //防暴力猜解用户密码
     constructor (qid: number, userPass: string, platform: Platform) {
         const data_dir = getPathInData("clients", qid.toString());
         this.client = createClient(qid, {
@@ -45,6 +49,8 @@ export class QQClient {
         this.accessTime = Date.now() / 1_000;
         this.userPass = userPass;
         this.storage = new Low<QQClientStorage>(new JSONFile(getPathWithin(data_dir, "storage.json")));
+        this.#lastUserPassFailed = 0;
+        this.#userPassFailedCount = 0;
     }
     async init () {
         await ensureDirPromise(this.client.dir);
@@ -74,8 +80,29 @@ export class QQClient {
             logger.warn(e);
         }
     }
-    checkUserPass (ps: string) {
-        return ps === this.userPass;
+    touch () {
+        this.accessTime = Date.now() / 1_000;
+    }
+    checkUserPass (ps: unknown) {
+        const now = Date.now() / 1_000;
+        if (now - this.#lastUserPassFailed < USER_PASS_RETRY_INTERVAL) {
+            this.#lastUserPassFailed = now;
+            return false;
+        } else if (this.#lastUserPassFailed > 0) {
+            this.#lastUserPassFailed = 0;
+            this.#userPassFailedCount = 0;
+        }
+        if (ps === this.userPass) {
+            this.#userPassFailedCount = 0;
+            return true;
+        } else {
+            this.#userPassFailedCount += 1;
+            if (this.#userPassFailedCount >= USER_PASS_RETRY_LIMIT) {
+                this.#lastUserPassFailed = now;
+                logger.info(`${this.client.uin} 用户密码错误次数太多`);
+            }
+            return false;
+        }
     }
 }
 
@@ -103,7 +130,7 @@ export const initQQClientModule = () => {
 export const getQQClient = (qid: number) => {
     const qclient = clientMap.get(qid);
     if (qclient) {
-        qclient.accessTime = Date.now() / 1_000;
+        qclient.touch();
         return qclient;
     } else {
         return null;
@@ -139,7 +166,7 @@ export const checkAndClearQQClient = () => {
         if (timeOffset > CLIENT_IDLE_BEFORE_LOGOUT) {
             // logout
             qclient.close(); // don't wait this Promise
-            qclient.accessTime = Date.now() / 1_000;
+            qclient.touch();
         }
     }
 };

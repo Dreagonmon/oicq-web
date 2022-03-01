@@ -6,6 +6,7 @@ import {
     logoutResolver as mQQClientLogoutResolver,
     LoginInput as MQQClientLoginInput,
 } from "./mutation/qqclient.js";
+import { clientResolver as qQQClientClientResolver } from "./query/qqclient.js";
 import { setTimeout } from "timers/promises";
 
 export const schema = new GraphQLSchema({
@@ -32,6 +33,10 @@ export const schema = new GraphQLSchema({
                     return "world";
                 },
             },
+            client: {
+                type: QQClient,
+                resolve: qQQClientClientResolver,
+            }
         },
     }),
     subscription: new GraphQLObjectType({

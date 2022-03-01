@@ -17,13 +17,14 @@ const server_options: ServerOptionsWithExtra = {
     context: (ctx) => ctx,
     onConnect: (ctx) => {
         ctx.extra.qid = (ctx.connectionParams?.qid as number) ?? 0;
-        const client = getQQClient(ctx.extra.qid);
-        if (client && client.checkUserPass(ctx.connectionParams?.userPass as string)) {
-            ctx.extra.qclient = client;
-        } else {
-            ctx.extra.qclient = undefined;
+        if (ctx.extra.qid > 0) {
+            const client = getQQClient(ctx.extra.qid);
+            if (client && client.checkUserPass(ctx.connectionParams?.userPass)) {
+                ctx.extra.qclient = client;
+            } else {
+                ctx.extra.qclient = undefined;
+            }
         }
-        // console.log(ctx.connectionParams["Authorization"]);
         return true;
     },
 };
