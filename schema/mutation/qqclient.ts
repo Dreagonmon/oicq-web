@@ -30,6 +30,7 @@ export const loginResolver: GraphQLFieldResolver<undefined, ContextWithExtra, Lo
             client = createQQClient(qid, args.userPass, Platform.iMac);
             await client.init();
         }
+        client.touch();
         if (client.client.isOnline()) {
             // 客户端已在线，验证userPass
             if (client.checkUserPass(args.userPass)) {
