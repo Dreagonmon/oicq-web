@@ -36,7 +36,7 @@ export const schema = new GraphQLSchema({
             client: {
                 type: QQClient,
                 resolve: qQQClientClientResolver,
-            }
+            },
         },
     }),
     subscription: new GraphQLObjectType({
