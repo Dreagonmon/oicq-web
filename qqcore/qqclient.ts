@@ -1,6 +1,7 @@
 import { PromiseLock } from "../utils/lock.js";
 import { getPathInData, getPathWithin, ensureDirPromise, clearDirPromise } from "../utils/env.js";
 import { registerBeforeExit } from "../utils/atexit.js";
+import { Subscribtion } from "./subscribe.js";
 import { setTimeout } from "timers/promises";
 import { createClient, Client, Platform } from "oicq";
 import { Low, JSONFile } from "lowdb";
@@ -19,6 +20,7 @@ let lastCleanTime = 0;
 export interface QQClientExtra {
     loginImage?: Buffer,
     loginError?: string,
+    subscribtions: Array<Subscribtion<unknown>>,
 }
 interface QQClientStorage {
     userPass?: string;
@@ -45,7 +47,9 @@ export class QQClient {
             data_dir,
         });
         this.lock = new PromiseLock();
-        this.extra = {};
+        this.extra = {
+            subscribtions: [],
+        };
         this.accessTime = Date.now() / 1_000;
         this.userPass = userPass;
         this.storage = new Low<QQClientStorage>(new JSONFile(getPathWithin(data_dir, "storage.json")));
@@ -104,6 +108,28 @@ export class QQClient {
                 logger.info(`${this.client.uin} 用户密码错误次数太多`);
             }
             return false;
+        }
+    }
+    createSubscribe <T> (resourceId: string, subscribeId: string) {
+        const sub = new Subscribtion<T>(resourceId, subscribeId);
+        this.extra.subscribtions.push(sub as Subscribtion<unknown>);
+        return sub;
+    }
+    feedSubscribe <T> (resourceId: string, value: T) {
+        this.extra.subscribtions.forEach((sub) => {
+            if (sub.hasId(resourceId)) {
+                sub.feedNext(value);
+            }
+        });
+    }
+    closeSubscribe (subscribeId: string) {
+        for (let i = 0; i < this.extra.subscribtions.length; i++) {
+            const sub = this.extra.subscribtions[i];
+            if (sub.hasId(subscribeId)) {
+                sub.close();
+                this.extra.subscribtions.splice(i, 1);
+                i -= 1;
+            }
         }
     }
 }

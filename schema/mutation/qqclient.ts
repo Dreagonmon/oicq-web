@@ -1,8 +1,10 @@
 import { GraphQLFieldResolver, GraphQLFieldConfigArgumentMap, GraphQLString } from "graphql";
 import { Platform } from "oicq";
 import { setTimeout } from "timers/promises";
-import { ContextWithExtra } from "../../qqcore/context.js";
+import { SubscribeContect } from "../../qqcore/context.js";
 import { getQQClient, createQQClient, removeQQClient, QQClient } from "../../qqcore/qqclient.js";
+import { combineId } from "../types/node.js";
+import { TYPECODE } from "../types/qqclient.js";
 
 interface LoginArgs {
     qid?: string,
@@ -16,7 +18,7 @@ export const LoginInput: GraphQLFieldConfigArgumentMap = {
     userPass: { type: GraphQLString },
 };
 
-export const loginResolver: GraphQLFieldResolver<undefined, ContextWithExtra, LoginArgs, Promise<QQClient | null | undefined>> = async (src, args, ctx) => {
+export const loginResolver: GraphQLFieldResolver<undefined, SubscribeContect, LoginArgs, Promise<QQClient | null | undefined>> = async (src, args, ctx) => {
     try {
         const qid = args?.qid ? Number.parseInt(args.qid) : NaN;
         if (!(args?.userPass) || Number.isNaN(qid)) {
@@ -62,13 +64,18 @@ export const loginResolver: GraphQLFieldResolver<undefined, ContextWithExtra, Lo
     }
 };
 
-export const logoutResolver: GraphQLFieldResolver<undefined, ContextWithExtra, LoginArgs, Promise<boolean>> = async (src, args, ctx) => {
+export const logoutResolver: GraphQLFieldResolver<undefined, SubscribeContect, LoginArgs, Promise<boolean>> = async (src, args, ctx) => {
     if (ctx.extra?.qclient) {
         // only logout when authed.
-        const qid = ctx.extra.qclient?.client?.uin;
+        const qid = ctx.extra.qclient.client.uin;
+        // logout
         try {
             await ctx.extra.qclient.close();
         } catch (e) { console.error(e); }
+        // update subscribe
+        const resId = combineId(TYPECODE, qid.toString());
+        ctx.extra.qclient.feedSubscribe(resId, ctx.extra.qclient);
+        ctx.extra.qclient.closeSubscribe(resId);
         ctx.extra.qclient = undefined;
         removeQQClient(qid);
         return true;

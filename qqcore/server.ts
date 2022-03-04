@@ -7,25 +7,32 @@ import { URL } from "url";
 import { schema } from "../schema/schema.js";
 import { getPathInSrc } from "../utils/env.js";
 import { getMime } from "../utils/mime.js";
-import { ContextExtra } from "./context.js";
+import { ContextExtra, SubscribeContect } from "./context.js";
 import { getQQClient } from "./qqclient.js";
 
 type ServerOptionsWithExtra = ServerOptions<Record<string, unknown>, ContextExtra>;
 
 const server_options: ServerOptionsWithExtra = {
     schema,
-    context: (ctx) => ctx,
+    context: (ctx, msg) => {
+        const subscribeContext: SubscribeContect = { extra: ctx.extra, id: msg.id };
+        return subscribeContext;
+    },
     onConnect: (ctx) => {
         ctx.extra.qid = (ctx.connectionParams?.qid as number) ?? 0;
         if (ctx.extra.qid > 0) {
             const client = getQQClient(ctx.extra.qid);
             if (client && client.checkUserPass(ctx.connectionParams?.userPass)) {
                 ctx.extra.qclient = client;
-            } else {
-                ctx.extra.qclient = undefined;
             }
         }
         return true;
+    },
+    onComplete: (ctx, msg) => {
+        // clear subscribe if exist
+        if (ctx.extra.qclient) {
+            ctx.extra.qclient.closeSubscribe(msg.id);
+        }
     },
 };
 

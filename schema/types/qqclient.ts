@@ -2,7 +2,7 @@ import { GraphQLID, GraphQLString, GraphQLObjectType, GraphQLBoolean } from "gra
 import { combineId, NodeType } from "./node.js";
 import { QQClient as _QQClient } from "../../qqcore/qqclient.js";
 
-const TYPECODE = "QQLC";
+export const TYPECODE = "QQLC";
 
 export const QQClient = new GraphQLObjectType({
     name: "QQClient",
