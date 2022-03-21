@@ -1,7 +1,12 @@
 import { PromiseLock } from "../utils/lock.js";
+import { AppendOnlyDatabase } from "../utils/aodb.js";
 import { getPathInData, getPathWithin, ensureDirPromise, clearDirPromise } from "../utils/env.js";
 import { registerBeforeExit } from "../utils/atexit.js";
-import { Subscribtion } from "./subscribe.js";
+import { hashPassword, createKey, encrypt, decrypt } from "../utils/passwd.js";
+import { Subscribtion, SUB_MESSAGE, SUB_UNREAD } from "./subscribe.js";
+import { SavedMessage } from "./message.js";
+import { combineId } from "../schema/types/node.js";
+import { TYPECODE as QQCLIENT_TYPECODE } from "../schema/types/qqclient.js";
 import { setTimeout } from "timers/promises";
 import { createClient, Client, Platform } from "oicq";
 import { Low, JSONFile } from "lowdb";
@@ -17,13 +22,19 @@ const USER_PASS_RETRY_LIMIT = 5; // times
 const clientMap: Map<number, QQClient> = new Map();
 /* last clean time */
 let lastCleanTime = 0;
+export interface ChatSession {
+    unread: number;
+}
 export interface QQClientExtra {
-    loginImage?: Buffer,
-    loginError?: string,
-    subscribtions: Array<Subscribtion<unknown>>,
+    loginImage?: Buffer;
+    loginError?: string;
+    subscribtions: Array<Subscribtion<unknown>>;
+    chatMessageDatabase: Map<string, AppendOnlyDatabase<Buffer>>;
 }
 interface QQClientStorage {
-    userPass?: string;
+    userPassHash?: string;
+    chatSessions: Array<string>;
+    chatSessionMap: Record<string, ChatSession>;
 }
 
 /* equal to User in other system. */
@@ -34,8 +45,9 @@ export class QQClient {
     extra: QQClientExtra;
     /* timestamp used to clean no use client */
     accessTime: number; // s, since 1970-01-01 00:00:00 UTC
-    userPass: string; // user set password, not qq password
-    storage: Low<QQClientStorage>;
+    #userPass: string; // user set password, not qq password
+    #userPassKey: Buffer;
+    #storage: Low<QQClientStorage>;
     #lastUserPassFailed: number; //防暴力猜解用户密码
     #userPassFailedCount: number; //防暴力猜解用户密码
     constructor (qid: number, userPass: string, platform: Platform) {
@@ -49,41 +61,131 @@ export class QQClient {
         this.lock = new PromiseLock();
         this.extra = {
             subscribtions: [],
+            chatMessageDatabase: new Map(),
         };
         this.accessTime = Date.now() / 1_000;
-        this.userPass = userPass;
-        this.storage = new Low<QQClientStorage>(new JSONFile(getPathWithin(data_dir, "storage.json")));
+        this.#userPass = userPass;
+        this.#userPassKey = createKey(userPass);
+        this.#storage = new Low<QQClientStorage>(new JSONFile(getPathWithin(data_dir, "storage.json")));
         this.#lastUserPassFailed = 0;
         this.#userPassFailedCount = 0;
     }
     async init () {
-        await ensureDirPromise(this.client.dir);
-        await this.storage.read();
-        this.storage.data = this.storage?.data ?? {};
-        if (this.storage.data.userPass && this.storage.data.userPass !== this.userPass) {
-            // 检查userPass是否发生变化，如变化则清空用户文件夹(为了安全)
-            await clearDirPromise(this.client.dir);
-            logger.debug(`${this.client.dir} cleared.`);
-        }
-        this.storage.data.userPass = this.userPass;
-        const extra = this.extra;
-        // 注册登录事件
-        this.client.on("system.login.qrcode", (evt) => { extra.loginImage = evt.image; });
-        this.client.on("system.login.slider", () => { extra.loginError = "请使用扫码登录!"; });
-        this.client.on("system.login.device", () => { extra.loginError = "请使用扫码登录!"; });
-        this.client.on("system.login.error", (evt) => { extra.loginError = evt.message; });
-        this.client.on("system.online", () => { logger.info(`${this.client.uin} 上线`); });
-        this.client.on("system.offline", () => { logger.info(`${this.client.uin} 下线`); });
+        await this.lock.do(async () => {
+            await ensureDirPromise(this.client.dir);
+            await this.#storage.read();
+            this.#storage.data = this.#storage?.data ?? {
+                chatSessions: [],
+                chatSessionMap: {},
+            };
+            if (this.#storage.data.userPassHash && this.#storage.data.userPassHash !== hashPassword(this.#userPass)) {
+                // 检查userPass是否发生变化，如变化则清空用户文件夹(为了安全)
+                await clearDirPromise(this.client.dir);
+                this.#storage.data.chatSessions = [];
+                logger.debug(`${this.client.dir} cleared.`);
+            }
+            this.#storage.data.userPassHash = hashPassword(this.#userPass);
+            // 加载聊天历史记录
+            await Promise.all(this.#storage.data.chatSessions.map(async (chatSessionId) => {
+                const db = new AppendOnlyDatabase<Buffer>(getPathWithin(this.client.dir, `${chatSessionId}.aodb`), false);
+                await db.init();
+                this.extra.chatMessageDatabase.set(chatSessionId, db);
+            }));
+            // 注册事件
+            const extra = this.extra;
+            this.client.on("system.login.qrcode", (evt) => { extra.loginImage = evt.image; });
+            this.client.on("system.login.slider", () => { extra.loginError = "请使用扫码登录!"; });
+            this.client.on("system.login.device", () => { extra.loginError = "请使用扫码登录!"; });
+            this.client.on("system.login.error", (evt) => { extra.loginError = evt.message; });
+            this.client.on("system.online", () => { logger.info(`${this.client.uin} 上线`); });
+            this.client.on("system.offline", () => { logger.info(`${this.client.uin} 下线`); });
+            this.client.on("message", async (evt) => {
+                const message = SavedMessage.fromMessage(evt);
+                if (message !== null) {
+                    await this.appendMessage(message, 1);
+                }
+            });
+        });
     }
     async close () {
-        try {
-            await this.storage.write();
-            if (this.client.isOnline()) {
-                await this.client.logout(false);
+        await this.lock.do(async () => {
+            try {
+                await this.#storage.write();
+                for (const db of this.extra.chatMessageDatabase.values()) {
+                    await db.close();
+                }
+                if (this.client.isOnline()) {
+                    await this.client.logout(false);
+                }
+                logger.info(`${this.client.uin} 已注销`);
+            } catch (e) {
+                logger.warn(e);
             }
-            logger.info(`${this.client.uin} 已注销`);
-        } catch (e) {
-            logger.warn(e);
+        });
+    }
+    async appendMessage (msg: SavedMessage, unread = 0) {
+        this.lock.do(async () => {
+            const chatSessionId = msg.getChatSessionId();
+            let db = this.extra.chatMessageDatabase.get(chatSessionId);
+            if (db === undefined) {
+                // session not exist
+                db = new AppendOnlyDatabase<Buffer>(getPathWithin(this.client.dir, `${chatSessionId}.aodb`), false);
+                await db.init();
+                this.extra.chatMessageDatabase.set(chatSessionId, db);
+                if (this.#storage.data !== null) {
+                    this.#storage.data.chatSessionMap[chatSessionId] = { unread };
+                    if (!this.#storage.data.chatSessions.includes(chatSessionId)) {
+                        this.#storage.data.chatSessions.push(chatSessionId);
+                    }
+                }
+            } else {
+                // session exist
+                if (this.#storage.data !== null) {
+                    this.#storage.data.chatSessionMap[chatSessionId].unread += unread;
+                }
+            }
+            const buf = msg.toBuffer();
+            const encrypted = await encrypt(this.#userPassKey, buf);
+            const recordId = await db.addRecord(encrypted);
+            msg.record_id = recordId >= 0 ? recordId : -1;
+            // 对聊天session进行排序，将当前session放到最前面
+            if (this.#storage.data !== null) {
+                const index = this.#storage.data.chatSessions.indexOf(chatSessionId);
+                this.#storage.data.chatSessions.splice(index, 1);
+                this.#storage.data.chatSessions.unshift(chatSessionId);
+            }
+            // notify
+            const resId = combineId(QQCLIENT_TYPECODE, this.client.uin.toString());
+            this.feedSubscribe(resId, this); // 聊天session发生变化
+            this.feedSubscribe(chatSessionId + SUB_MESSAGE, msg);
+            if (unread > 0 && this.#storage.data !== null) {
+                this.feedSubscribe(chatSessionId + SUB_UNREAD, this.#storage.data.chatSessionMap[chatSessionId].unread);
+            }
+        });
+    }
+    async getMessage (chatSessionId: string, index = -1, count = 10) {
+        const db = this.extra.chatMessageDatabase.get(chatSessionId);
+        const result: Array<SavedMessage> = [];
+        if (db !== undefined && count > 0) {
+            if (index < 0) {
+                index = db.getSize() - count; // 取最后count条消息
+                index = Math.max(index, 0);
+            }
+            const buffers = await db.getRecords(index, count);
+            for (let i = 0; i < buffers.length; i++) {
+                const decrypted = decrypt(this.#userPassKey, buffers[i]);
+                const msg = SavedMessage.fromBuffer(decrypted);
+                msg.record_id = index + i; // 附加record_id
+                result.push(msg);
+            }
+        }
+        return result;
+    }
+    getChatSessions () {
+        if (this.#storage.data !== null) {
+            return this.#storage.data.chatSessions;
+        } else {
+            return [];
         }
     }
     touch () {
@@ -98,7 +200,7 @@ export class QQClient {
             this.#lastUserPassFailed = 0;
             this.#userPassFailedCount = 0;
         }
-        if (ps === this.userPass) {
+        if (ps === this.#userPass) {
             this.#userPassFailedCount = 0;
             return true;
         } else {

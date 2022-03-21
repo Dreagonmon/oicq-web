@@ -28,10 +28,10 @@ export class PromiseLock {
     isLocked () {
         return this.#locked;
     }
-    async do (func: CallableFunction) {
+    async do <T> (func: () => Promise<T>) {
         await this.lock();
         try {
-            await func();
+            return await func();
         } finally {
             this.unlock();
         }

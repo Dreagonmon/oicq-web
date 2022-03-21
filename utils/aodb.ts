@@ -23,7 +23,7 @@ const INDEX_INIT_SIZE = 128;
 
 class AppendOnlyDatabaseIndex {
     #indexPath: string;
-    #index: Buffer;
+    #index?: Buffer;
     constructor (path: string) {
         this.#indexPath = path;
         this.#index = undefined;
@@ -37,6 +37,7 @@ class AppendOnlyDatabaseIndex {
         }
     }
     getOffsetAndLength (index: number) {
+        if (this.#index === undefined) return [-1, -1];
         if (this.#index.readUInt32BE(0) <= index) {
             return [-1, -1];
         }
@@ -46,6 +47,7 @@ class AppendOnlyDatabaseIndex {
         return [offset, endOffset - offset];
     }
     addIndex (dataLength: number) {
+        if (this.#index === undefined) return;
         const size = this.#index.readUInt32BE(0);
         const newDataEndOffset = (size <= 0 ? 0 : this.#index.readUInt32BE(size * 4)) + dataLength;
         // check if we could fit it
@@ -60,9 +62,11 @@ class AppendOnlyDatabaseIndex {
         return size; // new index
     }
     getRecordSize () {
+        if (this.#index === undefined) return 0;
         return this.#index.readUInt32BE(0);
     }
     getLastRecordEndOffset () {
+        if (this.#index === undefined) return 0;
         const size = this.#index.readUInt32BE(0);
         return size <= 0 ? 0 : this.#index.readUInt32BE(size * 4);
     }
@@ -70,9 +74,11 @@ class AppendOnlyDatabaseIndex {
         return this.getRecordSize();
     }
     backToCheckPoint (checkPoint: number) {
+        if (this.#index === undefined) return;
         this.#index.readUInt32BE(checkPoint);
     }
     async commit () {
+        if (this.#index === undefined) return;
         const size = this.#index.readUInt32BE(0);
         const l = [];
         for (let i = 0; i <= size; i++) {
@@ -82,24 +88,30 @@ class AppendOnlyDatabaseIndex {
     }
 }
 
-export class AppendOnlyDatabase {
+export class AppendOnlyDatabase<T> {
     #path: string;
     #cacheSize: number;
     #commitSize: number;
     #lock: PromiseLock;
     #notSyncedCount: number;
-    #syncTimerHandler: NodeJS.Timeout;
+    #syncTimerHandler: NodeJS.Timeout | undefined;
     #cache: Array<Buffer>; // string save a lot of memory compare to object
-    #dataFileHandler: FileHandle;
+    #dataFileHandler: FileHandle | undefined;
     #index: AppendOnlyDatabaseIndex;
     #useJson: boolean;
+    /**
+     * @param path database file path
+     * @param useJson convert item to json. if false, the item must be Buffer type
+     * @param cacheSize cache size
+     * @param commitSize force commit size
+     */
     constructor (path: string, useJson = true, cacheSize: number = MAX_CACHE_SIZE, commitSize: number = MAX_CACHE_SIZE) {
         this.#path = path;
         this.#cacheSize = cacheSize;
         this.#commitSize = commitSize;
         this.#lock = new PromiseLock();
         this.#notSyncedCount = 0;
-        this.#syncTimerHandler = null;
+        this.#syncTimerHandler = undefined;
         this.#cache = new Array<Buffer>(); // only the most recent records are stored in cache 
         this.#dataFileHandler = undefined;
         this.#index = new AppendOnlyDatabaseIndex(`${path}.index`);
@@ -124,19 +136,20 @@ export class AppendOnlyDatabase {
             this.#lock.unlock();
         }
     }
-    async addRecord (record: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    async addRecord (record: Buffer | T) {
         await this.#lock.lock();
         try {
             if (this.#useJson) {
                 const data = JSON.stringify(record);
                 this.#cache.push(Buffer.from(data, "utf8"));
             } else {
-                this.#cache.push(record);
+                if (record instanceof Buffer) this.#cache.push(record);
+                else return -1;
             }
             this.#notSyncedCount += 1;
             if (this.#notSyncedCount < this.#commitSize) {
                 // cache not full, just set the timer.
-                if (this.#syncTimerHandler !== null) {
+                if (this.#syncTimerHandler !== undefined) {
                     this.#syncTimerHandler.refresh();
                 } else {
                     this.#syncTimerHandler = setTimeout(this.sync.bind(this), COMMIT_DELAY);
@@ -152,15 +165,16 @@ export class AppendOnlyDatabase {
     }
     async getRecord (index: number) {
         const res = await this.getRecords(index, 1);
-        if (res.length > 0) {
-            return res.at(0);
+        if (res !== undefined && res.length > 0) {
+            return res[0];
         } else {
             return null;
         }
     }
     async getRecords (index: number, length: number) {
+        if (this.#dataFileHandler === undefined) return [];
         await this.#lock.lock();
-        const result = [];
+        const result: Array<T> = [];
         try {
             const savedRecordSize = this.#index.getRecordSize();
             const totalSize = this.#notSyncedCount + savedRecordSize;
@@ -184,8 +198,8 @@ export class AppendOnlyDatabase {
                     offsetAndLength.push(this.#index.getOffsetAndLength(i));
                 }
                 if (offsetAndLength.length > 0) {
-                    const startOffset = offsetAndLength.at(0)[0];
-                    const [lastOffset, lastLength] = offsetAndLength.at(-1);
+                    const startOffset = offsetAndLength[0][0];
+                    const [lastOffset, lastLength] = offsetAndLength[offsetAndLength.length - 1];
                     const finalOffset = lastOffset + lastLength;
                     const readLength = finalOffset - startOffset;
                     const buffer = Buffer.allocUnsafe(readLength);
@@ -196,7 +210,7 @@ export class AppendOnlyDatabase {
                             if (this.#useJson) {
                                 result.push(JSON.parse(buffer.toString("utf8", offsetInBuffer + 4, offsetInBuffer + len))); // skip first 4 bytes, they are record size
                             } else {
-                                result.push(Buffer.from(buffer, offsetInBuffer + 4, len - 4));
+                                result.push(Buffer.from(buffer.buffer, buffer.byteOffset + offsetInBuffer + 4, len - 4) as unknown as T);
                             }
                         });
                     }
@@ -208,9 +222,9 @@ export class AppendOnlyDatabase {
             const endIndex = indexInCache + length;
             for (let i = indexInCache; i < endIndex; i++) {
                 if (this.#useJson) {
-                    result.push(JSON.parse(this.#cache.at(i).toString("utf8")));
+                    result.push(JSON.parse(this.#cache[i].toString("utf8")));
                 } else {
-                    result.push(this.#cache.at(i));
+                    result.push(this.#cache[i] as unknown as T);
                 }
             }
             return result;
@@ -219,13 +233,15 @@ export class AppendOnlyDatabase {
         }
     }
     async #sync () {
+        if (this.#dataFileHandler === undefined) return;
         const checkPoint = this.#index.getCheckPoint();
+        if (checkPoint === undefined) return;
         try {
             if (this.#notSyncedCount <= 0) return;
             // write record to file
             const startIndex = this.#cache.length - this.#notSyncedCount;
             for (let i = startIndex; i < this.#cache.length; i++) {
-                const record = this.#cache.at(i);
+                const record = this.#cache[i];
                 const baseOffset = this.#index.getLastRecordEndOffset();
                 const bufferSizeInfo = Buffer.allocUnsafe(4);
                 bufferSizeInfo.writeUInt32BE(record.byteLength);
@@ -254,15 +270,15 @@ export class AppendOnlyDatabase {
         try {
             await this.#sync();
         } finally {
-            if (this.#syncTimerHandler !== null) {
+            if (this.#syncTimerHandler !== undefined) {
                 clearTimeout(this.#syncTimerHandler);
-                this.#syncTimerHandler = null;
+                this.#syncTimerHandler = undefined;
             }
             this.#lock.unlock();
         }
     }
     async close () {
         await this.sync();
-        await this.#dataFileHandler.close();
+        this.#dataFileHandler !== undefined ? await this.#dataFileHandler.close() : undefined;
     }
 }

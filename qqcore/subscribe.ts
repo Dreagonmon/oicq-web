@@ -1,5 +1,7 @@
 // qqclient -> extra -> subscribe_object
 // connect unregister on onComplete function.
+export const SUB_MESSAGE = "MSGE";
+export const SUB_UNREAD = "MURD";
 
 export class Subscribtion<T> {
     #id: string; // graphql id

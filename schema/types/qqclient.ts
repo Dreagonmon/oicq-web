@@ -1,4 +1,4 @@
-import { GraphQLID, GraphQLString, GraphQLObjectType, GraphQLBoolean } from "graphql";
+import { GraphQLID, GraphQLString, GraphQLObjectType, GraphQLBoolean, GraphQLList } from "graphql";
 import { combineId, NodeType } from "./node.js";
 import { QQClient as _QQClient } from "../../qqcore/qqclient.js";
 
@@ -45,6 +45,14 @@ export const QQClient = new GraphQLObjectType({
             resolve: (src) => {
                 if (src instanceof _QQClient) {
                     return src.extra?.loginError;
+                }
+            },
+        },
+        chatSessions: {
+            type: new GraphQLList(GraphQLString),
+            resolve: (src) => {
+                if (src instanceof _QQClient) {
+                    return src.getChatSessions();
                 }
             },
         },

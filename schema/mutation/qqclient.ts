@@ -24,9 +24,6 @@ export const loginResolver: GraphQLFieldResolver<undefined, SubscribeContect, Lo
         if (!(args?.userPass) || Number.isNaN(qid)) {
             return null; // require userPadd and qid.
         }
-        if (ctx.extra?.qclient) {
-            return ctx.extra.qclient; // already logined.
-        }
         let client = getQQClient(qid);
         if (client === null) {
             client = createQQClient(qid, args.userPass, Platform.iMac);
