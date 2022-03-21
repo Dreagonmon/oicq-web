@@ -17,7 +17,7 @@ export const hashPassword = (ps: string) => {
 };
 
 export const createKey = (ps: string) => {
-    return createHash("sha256").update(">SaLt>" + ps).digest();
+    return createHash("sha256").update("<sAlT<" + ps).digest();
 };
 
 export const encrypt = async (key: Buffer, buffer: Buffer) => {
