@@ -7,7 +7,7 @@ import { Subscribtion } from "./subscribe.js";
 import { SavedMessage } from "./message.js";
 import { combineId } from "../schema/types/node.js";
 import { setTimeout } from "timers/promises";
-import { createClient, Client, Platform } from "oicq";
+import { createClient, Client, Platform, Message } from "oicq";
 import { Low, JSONFile } from "lowdb";
 import log4js from "log4js";
 const logger = log4js.getLogger("qqclient");
@@ -97,17 +97,27 @@ export class QQClient {
             }));
             // 注册事件
             const extra = this.extra;
+            const messageCallback = (async (evt: Message) => {
+                const message = SavedMessage.fromMessage(evt);
+                if (message !== null) {
+                    await this.appendMessage(message, 1);
+                }
+            }).bind(this);
             this.client.on("system.login.qrcode", (evt) => { extra.loginImage = evt.image; });
             this.client.on("system.login.slider", () => { extra.loginError = "请使用扫码登录!"; });
             this.client.on("system.login.device", () => { extra.loginError = "请使用扫码登录!"; });
             this.client.on("system.login.error", (evt) => { extra.loginError = evt.message; });
             this.client.on("system.online", () => { logger.info(`${this.client.uin} 上线`); });
             this.client.on("system.offline", () => { logger.info(`${this.client.uin} 下线`); });
-            this.client.on("message", async (evt) => {
-                const message = SavedMessage.fromMessage(evt);
-                if (message !== null) {
-                    await this.appendMessage(message, 1);
-                }
+            this.client.on("message", messageCallback);
+            this.client.on("sync.message", messageCallback);
+            this.client.on("sync.read.group", (evt) => {
+                const sessionId = SavedMessage.combineChatSessionId("group", evt.group_id);
+                this.markReadedLocal(sessionId);
+            });
+            this.client.on("sync.read.private", (evt) => {
+                const sessionId = SavedMessage.combineChatSessionId("private", evt.user_id);
+                this.markReadedLocal(sessionId);
             });
         });
     }
@@ -195,7 +205,6 @@ export class QQClient {
         const session = this.#storage.data?.chatSessionMap[chatSessionId];
         if (session) {
             if (session.title === undefined && session.avatarUrl === undefined) {
-                // TODO: 加载聊天session的名称和头像URL
                 const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
                 session.avatarUrl = "";
                 session.title = uin.toString();
@@ -208,9 +217,6 @@ export class QQClient {
                         const group = this.client.pickGroup(uin);
                         session.avatarUrl = group.getAvatarUrl();
                         session.title = group.name ?? uin.toString();
-                    } else {
-                        // 什么都没变，不用通知客户端了
-                        return;
                     }
                 } catch {
                     // 出问题了，下次再尝试
@@ -221,6 +227,28 @@ export class QQClient {
             return session;
         } else {
             return null;
+        }
+    }
+    markReadedLocal (chatSessionId: string) {
+        const session = this.getChatSession(chatSessionId);
+        if (session) {
+            session.unread = 0;
+            this.feedSubscribe(this.getGlobalId(), this); // 聊天session发生变化
+        }
+    }
+    async markReadedRemote (chatSessionId: string) {
+        const session = this.getChatSession(chatSessionId);
+        if (session) {
+            const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
+            if (type == "private") {
+                const user = this.client.pickUser(uin);
+                await user.markRead();
+            } else if (type == "group") {
+                const group = this.client.pickGroup(uin);
+                await group.markRead();
+            }
+            session.unread = 0;
+            this.feedSubscribe(this.getGlobalId(), this); // 聊天session发生变化
         }
     }
     touch () {

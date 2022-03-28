@@ -116,7 +116,7 @@ export class SavedMessage implements Quotable, Forwardable {
         smsg.sub_type = sub_type;
         return smsg;
     }
-    static splitChatSessionId: (id: string) => [MessageType, number] = (id: string) => {
+    static splitChatSessionId: (id: string) => [MessageType, number] = (id) => {
         const [code, value] = divideId(id);
         if (code in TYPE_CODE_MAP_R) {
             return [TYPE_CODE_MAP_R[code as MessageCodeType], Number.parseInt(value)];
@@ -124,12 +124,15 @@ export class SavedMessage implements Quotable, Forwardable {
             return [TYPE_CODE_MAP_R["UMSG"], Number.parseInt(value)];
         }
     };
-    getChatSessionId () {
+    static combineChatSessionId: (type: MessageType, id: number) => string = (type, id) => {
         let typecode = "UMSG";
-        if (this.message_type && this.message_type in TYPE_CODE_MAP) {
-            typecode = TYPE_CODE_MAP[this.message_type];
+        if (type && type in TYPE_CODE_MAP) {
+            typecode = TYPE_CODE_MAP[type];
         }
-        return combineId(typecode, this.group_id.toString());
+        return combineId(typecode, id.toString());
+    };
+    getChatSessionId () {
+        return SavedMessage.combineChatSessionId(this.message_type, this.group_id);
     }
     toBuffer () {
         return Buffer.from(JSON.stringify(this), "utf8");
