@@ -771,10 +771,10 @@ needle@^2.5.2:
     iconv-lite "^0.4.4"
     sax "^1.2.4"
 
-oicq@^2.2.0:
-  version "2.2.0"
-  resolved "https://mirrors.cloud.tencent.com/npm/oicq/-/oicq-2.2.0.tgz#309f00a11daf4860c960bb8d28063bf5dc15ed5c"
-  integrity sha512-WwZv5HK+eTueKgo6ifoHoI0m5g2eR6uhelopSHbJ487V9I2qXRG/L7mzeQoxffwv2/Ug9pMkuiYZmMmGlskpLQ==
+oicq@^2.2.1:
+  version "2.2.1"
+  resolved "https://mirrors.cloud.tencent.com/npm/oicq/-/oicq-2.2.1.tgz#f62022867eff13e64ea2cb882be97f78404aa854"
+  integrity sha512-jbr26HiIvPwPCXO1B8/VJp6aw06/rD1idMnFkP7fKbDcOovrzatQq4BEKSQUUqz/alvyvCGeFnmVvvU1XyEwqw==
   dependencies:
     axios "^0.24.0"
     jsqr "^1.4.0"
