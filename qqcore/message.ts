@@ -34,8 +34,7 @@ export class SavedMessage implements Quotable, Forwardable {
     message_type: MessageType;
     sub_type: MessageSubType;
     constructor () {
-        // default value
-        this.user_id = 0;
+        this.user_id = 0; // sender
         this.group_id = 0;
         this.message_id = "";
         this.time = 0;

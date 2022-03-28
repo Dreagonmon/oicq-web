@@ -100,7 +100,7 @@ export class QQClient {
             const messageCallback = (async (evt: Message) => {
                 const message = SavedMessage.fromMessage(evt);
                 if (message !== null) {
-                    await this.appendMessage(message, 1);
+                    await this.appendMessage(message, message.user_id === this.client.uin ? 0 : 1);
                 }
             }).bind(this);
             this.client.on("system.login.qrcode", (evt) => { extra.loginImage = evt.image; });
