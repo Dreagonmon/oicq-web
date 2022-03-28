@@ -22,7 +22,7 @@ const server_options: ServerOptionsWithExtra = {
         ctx.extra.qid = (ctx.connectionParams?.qid as number) ?? 0;
         if (ctx.extra.qid > 0) {
             const client = getQQClient(ctx.extra.qid);
-            if (client && client.checkUserPass(ctx.connectionParams?.userPass)) {
+            if (client && ctx.connectionParams?.userPass && client.checkUserPass(ctx.connectionParams?.userPass as string)) {
                 ctx.extra.qclient = client;
             }
         }

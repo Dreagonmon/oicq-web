@@ -1,5 +1,5 @@
 //https://github.com/enisdenjo/graphql-ws
-import { GraphQLSchema, GraphQLObjectType, GraphQLString, GraphQLBoolean } from "graphql";
+import { GraphQLSchema, GraphQLObjectType, GraphQLBoolean } from "graphql";
 import { QQClient } from "./types/qqclient.js";
 import {
     loginResolver as mQQClientLoginResolver,
@@ -9,7 +9,6 @@ import {
 import { clientResolver as qQQClientClientResolver } from "./query/qqclient.js";
 import { clientSubscripter as sQQClientSubscripter } from "./subscription/qqclient.js";
 import { SubscribeContect } from "../qqcore/context.js";
-import { setTimeout } from "timers/promises";
 
 export const schema = new GraphQLSchema({
     mutation: new GraphQLObjectType({
@@ -29,12 +28,6 @@ export const schema = new GraphQLSchema({
     query: new GraphQLObjectType({
         name: "Query",
         fields: {
-            hello: {
-                type: GraphQLString,
-                resolve: () => {
-                    return "world";
-                },
-            },
             client: {
                 type: QQClient,
                 resolve: qQQClientClientResolver,
@@ -44,17 +37,6 @@ export const schema = new GraphQLSchema({
     subscription: new GraphQLObjectType({
         name: "Subscription",
         fields: {
-            greetings: {
-                type: GraphQLString,
-                subscribe: async function *() {
-                    for (let i = 0; i < 3600; i++) {
-                        for (const hi of ["Hi", "Bonjour", "Hola", "Ciao", "Zdravo"]) {
-                            yield { greetings: hi };
-                            await setTimeout(1000);
-                        }
-                    }
-                },
-            },
             client: {
                 type: QQClient,
                 subscribe: async function *(src, args: Record<string, never>, ctx: SubscribeContect) {

@@ -3,8 +3,6 @@ import { Platform } from "oicq";
 import { setTimeout } from "timers/promises";
 import { SubscribeContect } from "../../qqcore/context.js";
 import { getQQClient, createQQClient, removeQQClient, QQClient } from "../../qqcore/qqclient.js";
-import { combineId } from "../types/node.js";
-import { TYPECODE } from "../types/qqclient.js";
 
 interface LoginArgs {
     qid?: string,
@@ -70,7 +68,7 @@ export const logoutResolver: GraphQLFieldResolver<undefined, SubscribeContect, L
             await ctx.extra.qclient.close();
         } catch (e) { console.error(e); }
         // update subscribe
-        const resId = combineId(TYPECODE, qid.toString());
+        const resId = ctx.extra.qclient.getGlobalId();
         ctx.extra.qclient.feedSubscribe(resId, ctx.extra.qclient);
         ctx.extra.qclient.closeSubscribe(resId);
         ctx.extra.qclient = undefined;

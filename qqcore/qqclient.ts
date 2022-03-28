@@ -3,15 +3,16 @@ import { AppendOnlyDatabase } from "../utils/aodb.js";
 import { getPathInData, getPathWithin, ensureDirPromise, clearDirPromise } from "../utils/env.js";
 import { registerBeforeExit } from "../utils/atexit.js";
 import { hashPassword, createKey, encrypt, decrypt } from "../utils/passwd.js";
-import { Subscribtion, SUB_MESSAGE, SUB_UNREAD } from "./subscribe.js";
+import { Subscribtion } from "./subscribe.js";
 import { SavedMessage } from "./message.js";
 import { combineId } from "../schema/types/node.js";
-import { TYPECODE as QQCLIENT_TYPECODE } from "../schema/types/qqclient.js";
 import { setTimeout } from "timers/promises";
 import { createClient, Client, Platform } from "oicq";
 import { Low, JSONFile } from "lowdb";
 import log4js from "log4js";
 const logger = log4js.getLogger("qqclient");
+
+export const TYPECODE = "QQLC";
 
 const CLIENT_IDLE_BEFORE_LOGOUT = 259200; // s, 60*60*24*3 = 3d
 const CLIENT_IDLE_BEFORE_CLEAN = 3600; // s
@@ -23,7 +24,10 @@ const clientMap: Map<number, QQClient> = new Map();
 /* last clean time */
 let lastCleanTime = 0;
 export interface ChatSession {
+    sessionId: string;
     unread: number;
+    title?: string;
+    avatarUrl?: string;
 }
 export interface QQClientExtra {
     loginImage?: Buffer;
@@ -133,7 +137,7 @@ export class QQClient {
                 await db.init();
                 this.extra.chatMessageDatabase.set(chatSessionId, db);
                 if (this.#storage.data !== null) {
-                    this.#storage.data.chatSessionMap[chatSessionId] = { unread };
+                    this.#storage.data.chatSessionMap[chatSessionId] = { sessionId: chatSessionId, unread };
                     if (!this.#storage.data.chatSessions.includes(chatSessionId)) {
                         this.#storage.data.chatSessions.push(chatSessionId);
                     }
@@ -155,12 +159,8 @@ export class QQClient {
                 this.#storage.data.chatSessions.unshift(chatSessionId);
             }
             // notify
-            const resId = combineId(QQCLIENT_TYPECODE, this.client.uin.toString());
-            this.feedSubscribe(resId, this); // 聊天session发生变化
-            this.feedSubscribe(chatSessionId + SUB_MESSAGE, msg);
-            if (unread > 0 && this.#storage.data !== null) {
-                this.feedSubscribe(chatSessionId + SUB_UNREAD, this.#storage.data.chatSessionMap[chatSessionId].unread);
-            }
+            this.feedSubscribe(this.getGlobalId(), this); // 聊天session发生变化
+            this.feedSubscribe(chatSessionId, msg);
         });
     }
     async getMessage (chatSessionId: string, index = -1, count = 10) {
@@ -181,6 +181,9 @@ export class QQClient {
         }
         return result;
     }
+    getGlobalId () {
+        return combineId(TYPECODE, this.client.uin.toString());
+    }
     getChatSessions () {
         if (this.#storage.data !== null) {
             return this.#storage.data.chatSessions;
@@ -188,10 +191,42 @@ export class QQClient {
             return [];
         }
     }
+    getChatSession (chatSessionId: string) {
+        const session = this.#storage.data?.chatSessionMap[chatSessionId];
+        if (session) {
+            if (session.title === undefined && session.avatarUrl === undefined) {
+                // TODO: 加载聊天session的名称和头像URL
+                const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
+                session.avatarUrl = "";
+                session.title = uin.toString();
+                try {
+                    if (type == "private") {
+                        const user = this.client.pickUser(uin);
+                        session.avatarUrl = user.getAvatarUrl();
+                        session.title = user.asFriend().nickname ?? uin.toString();
+                    } else if (type == "group") {
+                        const group = this.client.pickGroup(uin);
+                        session.avatarUrl = group.getAvatarUrl();
+                        session.title = group.name ?? uin.toString();
+                    } else {
+                        // 什么都没变，不用通知客户端了
+                        return;
+                    }
+                } catch {
+                    // 出问题了，下次再尝试
+                    session.avatarUrl = undefined;
+                    session.title = undefined;
+                }
+            }
+            return session;
+        } else {
+            return null;
+        }
+    }
     touch () {
         this.accessTime = Date.now() / 1_000;
     }
-    checkUserPass (ps: unknown) {
+    checkUserPass (ps: string) {
         const now = Date.now() / 1_000;
         if (now - this.#lastUserPassFailed < USER_PASS_RETRY_INTERVAL) {
             this.#lastUserPassFailed = now;

@@ -1,8 +1,60 @@
-import { GraphQLID, GraphQLString, GraphQLObjectType, GraphQLBoolean, GraphQLList } from "graphql";
-import { combineId, NodeType } from "./node.js";
+import { GraphQLID, GraphQLString, GraphQLObjectType, GraphQLBoolean, GraphQLList, GraphQLInt } from "graphql";
+import { NodeType } from "./node.js";
 import { QQClient as _QQClient } from "../../qqcore/qqclient.js";
+import { SubscribeContect } from "../../qqcore/context.js";
 
-export const TYPECODE = "QQLC";
+export const ChatSession = new GraphQLObjectType({
+    name: "ChatSession",
+    interfaces: [NodeType],
+    fields: {
+        id: {
+            type: GraphQLID,
+            resolve: (src) => {
+                if (typeof src === "string") {
+                    return src;
+                } else if (typeof src.sessionId == "string") {
+                    return src.sessionId;
+                }
+            },
+        },
+        unread: {
+            type: GraphQLInt,
+            resolve: (src, args, ctx: SubscribeContect) => {
+                if (typeof src === "string" && ctx.extra.qclient) {
+                    src = ctx.extra.qclient.getChatSession(src);
+                }
+                if (typeof src?.unread === "number") {
+                    return src.unread;
+                }
+                return 0;
+            },
+        },
+        title: {
+            type: GraphQLString,
+            resolve: (src, args, ctx: SubscribeContect) => {
+                if (typeof src === "string" && ctx.extra.qclient) {
+                    src = ctx.extra.qclient.getChatSession(src);
+                }
+                if (typeof src?.title === "string") {
+                    return src.title;
+                }
+                return "";
+            },
+        },
+        avatarUrl: {
+            type: GraphQLString,
+            resolve: (src, args, ctx: SubscribeContect) => {
+                if (typeof src === "string" && ctx.extra.qclient) {
+                    src = ctx.extra.qclient.getChatSession(src);
+                }
+                if (typeof src?.avatarUrl === "string") {
+                    return src.avatarUrl;
+                }
+                return "";
+            },
+        },
+    },
+});
 
 export const QQClient = new GraphQLObjectType({
     name: "QQClient",
@@ -12,7 +64,7 @@ export const QQClient = new GraphQLObjectType({
             type: GraphQLID,
             resolve: (src) => {
                 if (src instanceof _QQClient) {
-                    return combineId(TYPECODE, src.client.uin.toString());
+                    return src.getGlobalId();
                 }
             },
         },
@@ -49,10 +101,12 @@ export const QQClient = new GraphQLObjectType({
             },
         },
         chatSessions: {
-            type: new GraphQLList(GraphQLString),
+            type: new GraphQLList(ChatSession),
             resolve: (src) => {
                 if (src instanceof _QQClient) {
                     return src.getChatSessions();
+                } else {
+                    return [];
                 }
             },
         },

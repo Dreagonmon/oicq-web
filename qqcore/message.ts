@@ -1,14 +1,21 @@
 import { Quotable, Forwardable, MessageElem, Message, PrivateMessage, GroupMessage, DiscussMessage, MessageRet } from "oicq";
-import { combineId } from "../schema/types/node.js";
-type MessageType = "group" | "discuss" | "private" | string;
-type MessageSubType = "group" | "friend" | "other" | "self" | "normal" | "anonymous" | string;
-type Optional<T> = T | undefined;
+import { combineId, divideId } from "../schema/types/node.js";
+type MessageType = "group" | "discuss" | "private" | "unknown";
+type MessageCodeType = "GMSG" | "DMSG" | "PMSG" | "UMSG";
+type MessageSubType = "group" | "friend" | "other" | "self" | "normal" | "anonymous" | "unknown";
 
-export const TYPE_CODE_MAP: Record<MessageType, string> = {
+export const TYPE_CODE_MAP: Record<MessageType, MessageCodeType> = {
     "group": "GMSG",
     "discuss": "DMSG",
     "private": "PMSG",
-    // "unknown": "UMSG",
+    "unknown": "UMSG",
+};
+
+export const TYPE_CODE_MAP_R: Record<MessageCodeType, MessageType> = {
+    "GMSG": "group",
+    "DMSG": "discuss",
+    "PMSG": "private",
+    "UMSG": "unknown",
 };
 
 /* universal message */
@@ -22,10 +29,10 @@ export class SavedMessage implements Quotable, Forwardable {
     rand: number;
     message: MessageElem[];
     record_id: number;
-    atme?: boolean;
-    nickname?: string;
-    message_type?: MessageType;
-    sub_type?: MessageSubType;
+    atme: boolean;
+    nickname: string;
+    message_type: MessageType;
+    sub_type: MessageSubType;
     constructor () {
         // default value
         this.user_id = 0;
@@ -34,8 +41,12 @@ export class SavedMessage implements Quotable, Forwardable {
         this.time = 0;
         this.seq = 0;
         this.rand = 0;
-        this.record_id = -1; // not assign id.
         this.message = [];
+        this.record_id = -1; // not assign id.
+        this.atme = false;
+        this.nickname = "";
+        this.message_type = "unknown";
+        this.sub_type = "unknown";
     }
     static fromJSONObject (msg: SavedMessage) {
         const smsg = new SavedMessage();
@@ -60,7 +71,7 @@ export class SavedMessage implements Quotable, Forwardable {
             if (msg instanceof PrivateMessage || msg instanceof GroupMessage || msg instanceof DiscussMessage) {
                 smsg.user_id = msg.sender.user_id;
                 smsg.nickname = msg.sender.nickname;
-                smsg.message_type = msg.message_type;
+                smsg.message_type = msg.message_type in TYPE_CODE_MAP ? msg.message_type : "unknown";
                 if (msg instanceof PrivateMessage || msg instanceof GroupMessage) {
                     smsg.sub_type = msg.sub_type;
                 }
@@ -89,9 +100,9 @@ export class SavedMessage implements Quotable, Forwardable {
         msg: MessageRet,
         uin: number,
         message: MessageElem[],
-        nickname: Optional<string> = undefined,
-        message_type: Optional<MessageType> = undefined,
-        sub_type: Optional<MessageSubType> = undefined,
+        nickname = "",
+        message_type: MessageType = "unknown",
+        sub_type: MessageSubType = "unknown",
     ) {
         const smsg = new SavedMessage();
         smsg.user_id = uin;
@@ -105,6 +116,14 @@ export class SavedMessage implements Quotable, Forwardable {
         smsg.sub_type = sub_type;
         return smsg;
     }
+    static splitChatSessionId: (id: string) => [MessageType, number] = (id: string) => {
+        const [code, value] = divideId(id);
+        if (code in TYPE_CODE_MAP_R) {
+            return [TYPE_CODE_MAP_R[code as MessageCodeType], Number.parseInt(value)];
+        } else {
+            return [TYPE_CODE_MAP_R["UMSG"], Number.parseInt(value)];
+        }
+    };
     getChatSessionId () {
         let typecode = "UMSG";
         if (this.message_type && this.message_type in TYPE_CODE_MAP) {
@@ -114,5 +133,16 @@ export class SavedMessage implements Quotable, Forwardable {
     }
     toBuffer () {
         return Buffer.from(JSON.stringify(this), "utf8");
+    }
+    toPlainString () {
+        let text = "";
+        for (const elem of this.message) {
+            if (elem.type == "text") {
+                text = text + elem.text;
+            } else {
+                text = text + `[${elem.type}]`;
+            }
+        }
+        return text;
     }
 }
