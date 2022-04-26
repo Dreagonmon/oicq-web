@@ -68,6 +68,8 @@ const Login: () => h.JSX.Element = () => {
             } else {
                 setErrorMsg("登录失败, 请检查您的登录信息");
             }
+        } catch {
+            setErrorMsg("登录失败，请检查网络连接并确认服务器在线");
         } finally {
             setLoading(false);
         }

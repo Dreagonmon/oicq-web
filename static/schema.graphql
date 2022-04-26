@@ -1,0 +1,33 @@
+type Query {
+  client: QQClient
+}
+
+type QQClient implements Node {
+  id: ID
+  qid: String
+  isOnline: Boolean
+  loginImage: String
+  loginError: String
+  chatSessions: [ChatSession]
+}
+
+interface Node {
+  """Global node ID."""
+  id: ID
+}
+
+type ChatSession implements Node {
+  id: ID
+  unread: Int
+  title: String
+  avatarUrl: String
+}
+
+type Mutation {
+  login(qid: String, qPass: String, userPass: String): QQClient
+  logout: Boolean
+}
+
+type Subscription {
+  client: QQClient
+}

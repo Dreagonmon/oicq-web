@@ -4,24 +4,23 @@ import { useStore } from "@nanostores/preact";
 import { client as clientStore } from "../utils/store";
 import { QQClient } from "../types/QQClient";
 import { request } from "../utils/graphql";
-import Header from "./header";
-import Login from "../pages/Login";
+import Header from "../components/header";
+import Login from "./Login";
+import Chat from "./Chat";
 // import Test from "../pages/test";
 
-const GQL_QUERY = `
-query QueryClient {
-    client {
-        id
-        qid
-        isOnline
-        loginImage
-        loginError
-    }
-}
-`;
 interface GQL_QUERY_RESULT {
     client?: QQClient;
 }
+
+const GQL_QUERY = `#graphql
+query QueryClient {
+    client {
+        qid
+        isOnline
+    }
+}
+`;
 
 const App = () => {
     const client = useStore(clientStore, { keys: ["isOnline"]});
@@ -31,13 +30,13 @@ const App = () => {
             if (res.data && res.data.client && res.data.client.isOnline) {
                 clientStore.set(res.data.client);
             }
-        });
+        }).catch(() => { /* just ignore the error */});
     }, []); // only run once
 
     return <div id="app" className="w-full h-full">
         <Header />
         <div className="pt-16 w-full h-full overflow-hidden flex flex-col bg-gray-100">
-            {client.isOnline ? "登录成功!" : <Login />}
+            {client.isOnline ? <Chat /> : <Login />}
             {/* <Test /> */}
         </div>
     </div>;
