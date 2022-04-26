@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { useEffect } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { QQClient } from "../../types/QQClient";
 import { useSubscription } from "../../hooks/subscription";
 
@@ -24,8 +24,9 @@ subscription SubscriptionClient {
 `;
 
 const Chat: () => h.JSX.Element = () => {
-    const client = useSubscription<GQL_QUERY_RESULT>(GQL_QUERY, {});
-
+    const [params, setParams] = useState({});
+    const client = useSubscription<GQL_QUERY_RESULT>(GQL_QUERY, params);
+    console.log(client);
     useEffect(() => {
     }, []);
 
