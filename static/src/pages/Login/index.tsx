@@ -1,24 +1,7 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { changeValue } from "../../utils/htmlevent";
-import { request } from "../../utils/graphql";
-import { client as storeClient, qid as storeQid, userPass as storeUserPass } from "../../utils/store";
-import { QQClient } from "../../types/QQClient";
-
-const GQL_LOGIN = `
-mutation Login($qid: String, $qPass: String, $userPass: String) {
-    login(qid: $qid, qPass: $qPass, userPass: $userPass) {
-      id
-      qid
-      isOnline
-      loginImage
-      loginError
-    }
-  }
-`;
-interface GQL_LOGIN_RESULT {
-    login?: QQClient;
-}
+import { clientLogin } from "../../stores";
 
 const Login: () => h.JSX.Element = () => {
     const [qid, setQid] = useState("");
@@ -47,22 +30,15 @@ const Login: () => h.JSX.Element = () => {
             setErrorMsg("");
         }
         setLoading(true);
-        // keep login info before await.
-        const qidAtLogin = Number.parseInt(qid, 10);
-        const userPassAtLogin = userPass;
         try {
-            const res = await request<GQL_LOGIN_RESULT>(GQL_LOGIN, { qid, qPass, userPass });
-            if (res.data && res.data.login) {
-                if (res.data.login.isOnline) {
-                    storeClient.set(res.data.login);
-                    storeQid.set(qidAtLogin);
-                    storeUserPass.set(userPassAtLogin);
-                } else {
-                    if (res.data.login.loginImage) {
-                        setQrCode(res.data.login.loginImage);
+            const res = await clientLogin(qid, qPass, userPass);
+            if (res) {
+                if (!res.isOnline) {
+                    if (res.loginImage) {
+                        setQrCode(res.loginImage);
                     }
-                    if (res.data.login.loginError) {
-                        setErrorMsg(res.data.login.loginError);
+                    if (res.loginError) {
+                        setErrorMsg(res.loginError);
                     }
                 }
             } else {

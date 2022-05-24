@@ -8,11 +8,11 @@ export const clientSubscripter: (src: undefined, args: Record<string, never>, ct
         yield ctx.extra.qclient;
         while (ctx.extra?.qclient) {
             try {
+                ctx.extra.qclient.touch();
                 const client = await sub.waitNext();
                 if (client) {
                     yield client;
                 }
-                ctx.extra.qclient.touch();
             } catch {
                 return null; // subscribe end.
             }

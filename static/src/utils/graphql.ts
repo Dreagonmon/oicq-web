@@ -1,5 +1,5 @@
 import { createClient, Client, ExecutionResult } from "graphql-ws";
-import { qid, userPass } from "./store";
+import { qid, userPass } from "../stores";
 
 const RESPONSE_TIMEOUT = 1000;
 const ACK_INTERVAL = 60000;

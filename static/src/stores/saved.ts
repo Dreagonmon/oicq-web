@@ -1,5 +1,4 @@
-import { atom, map, onSet } from "nanostores";
-import { QQClient } from "../types/QQClient";
+import { atom, onSet } from "nanostores";
 
 const LOCALSOTRAGE_QID = "qid";
 const LOCALSOTRAGE_USER_PASS = "userPass";
@@ -17,7 +16,6 @@ const getInLocalStorage = <T>(k: string, def: T, cast: ((v: string) => T) | unde
 
 export const qid = atom<number>(getInLocalStorage(LOCALSOTRAGE_QID, 0, Number.parseInt));
 export const userPass = atom<string>(getInLocalStorage(LOCALSOTRAGE_USER_PASS, ""));
-export const client = map<QQClient>({});
 
 // 设置store事件
 onSet(qid, ({ newValue }) => {
