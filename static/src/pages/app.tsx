@@ -1,14 +1,18 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { useStore } from "@nanostores/preact";
 import { client as clientStore } from "../stores";
 import Header from "../components/Header";
 import Login from "./Login";
 import Chat from "./Chat";
+import { usePartStore } from "../hooks/partStore";
+import { QQClient } from "../types/QQClient";
+
+const CLIENT_ATTR_LIST = ["isOnline"];
 
 const App = () => {
-    const client = useStore(clientStore, { keys: ["isOnline"]});
+    const client = usePartStore<QQClient>(clientStore, CLIENT_ATTR_LIST);
     const [loading, setLoading] = useState(true);
+    console.debug("app.tsx", client);
 
     useEffect(() => {
         // wait client init.
