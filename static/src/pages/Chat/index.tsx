@@ -24,7 +24,7 @@ const Chat: () => h.JSX.Element = () => {
                     {chatSession.title}
                 </div>
                 <div class="w-16 h-full flex content-center justify-center items-center">
-                    <span class="bg-red-600 text-white rounded-2xl p-1">{chatSession.unread}</span>
+                    { chatSession.unread && chatSession.unread > 0 ? <span class="bg-red-600 text-white rounded-2xl p-1">{chatSession.unread}</span> : null}
                 </div>
             </div>;
         });
