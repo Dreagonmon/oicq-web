@@ -47,3 +47,10 @@ export const unregisterBeforeExit = (callback: AtExitCallback) => {
         callbacks.splice(index, 1);
     }
 };
+
+export const initExceptionHandler = () => {
+    process.on("unhandledRejection", (reason, promise) => {
+        console.error("Unhandled Rejection at:", promise, "reason:", reason);
+        // Application specific logging, throwing an error, or other logic here
+    });
+};

@@ -1,8 +1,10 @@
 import { initEnv } from "./utils/env.js";
 import { initLog } from "./utils/logging.js";
+import { initExceptionHandler } from "./utils/atexit.js";
 // init
 initEnv();
 initLog();
+initExceptionHandler();
 import log4js from "log4js";
 const logger = log4js.getLogger("app");
 import { initQQClientModule } from "./qqcore/qqclient.js";
