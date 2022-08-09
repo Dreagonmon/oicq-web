@@ -1,7 +1,7 @@
-import { SubscribeContect } from "../../qqcore/context.js";
+import { SubscribeContext } from "../../qqcore/context.js";
 import { QQClient } from "../../qqcore/qqclient.js";
 
-export const clientSubscripter: (src: undefined, args: Record<string, never>, ctx: SubscribeContect) => AsyncGenerator<QQClient, null, unknown> = async function *(src, args, ctx) {
+export const clientSubscripter: (src: undefined, args: Record<string, never>, ctx: SubscribeContext) => AsyncGenerator<QQClient, null, unknown> = async function *(src, args, ctx) {
     if (ctx.extra?.qclient) {
         const resId = ctx.extra.qclient.getGlobalId();
         const sub = ctx.extra.qclient.createSubscribe<QQClient>(resId, ctx.id);

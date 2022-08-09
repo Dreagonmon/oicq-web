@@ -1,26 +1,26 @@
-import { GraphQLFieldResolver, GraphQLFieldConfigArgumentMap, GraphQLString } from "graphql";
+import { GraphQLFieldResolver, GraphQLFieldConfigArgumentMap, GraphQLString, GraphQLNonNull } from "graphql";
 import { Platform } from "oicq";
 import { setTimeout } from "timers/promises";
-import { SubscribeContect } from "../../qqcore/context.js";
+import { SubscribeContext } from "../../qqcore/context.js";
 import { getQQClient, createQQClient, removeQQClient, QQClient } from "../../qqcore/qqclient.js";
 
 interface LoginArgs {
-    qid?: string,
+    qid: string,
     qPass?: string,
-    userPass?: string,
+    userPass: string,
 }
 
 export const LoginInput: GraphQLFieldConfigArgumentMap = {
-    qid: { type: GraphQLString },
+    qid: { type: new GraphQLNonNull(GraphQLString) },
     qPass: { type: GraphQLString },
-    userPass: { type: GraphQLString },
+    userPass: { type: new GraphQLNonNull(GraphQLString) },
 };
 
-export const loginResolver: GraphQLFieldResolver<undefined, SubscribeContect, LoginArgs, Promise<QQClient | null | undefined>> = async (src, args, ctx) => {
+export const loginResolver: GraphQLFieldResolver<undefined, SubscribeContext, LoginArgs, Promise<QQClient | null | undefined>> = async (src, args, ctx) => {
     try {
         const qid = args?.qid ? Number.parseInt(args.qid) : NaN;
         if (!(args?.userPass) || Number.isNaN(qid)) {
-            return null; // require userPadd and qid.
+            return null; // require userPass and qid.
         }
         let client = getQQClient(qid);
         if (client === null) {
@@ -63,7 +63,7 @@ export const loginResolver: GraphQLFieldResolver<undefined, SubscribeContect, Lo
     }
 };
 
-export const logoutResolver: GraphQLFieldResolver<undefined, SubscribeContect, LoginArgs, Promise<boolean>> = async (src, args, ctx) => {
+export const logoutResolver: GraphQLFieldResolver<undefined, SubscribeContext, LoginArgs, Promise<boolean>> = async (src, args, ctx) => {
     if (ctx.extra?.qclient) {
         // only logout when authed.
         const qid = ctx.extra.qclient.client.uin;

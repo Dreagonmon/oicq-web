@@ -4,7 +4,7 @@ import { request, getClient } from "../utils/graphql";
 import { QQClient } from "../types/QQClient";
 
 const GQL_LOGIN = `#graphql
-mutation Login($qid: String, $qPass: String, $userPass: String) {
+mutation Login($qid: String!, $qPass: String, $userPass: String!) {
     login(qid: $qid, qPass: $qPass, userPass: $userPass) {
         id
         qid
@@ -88,7 +88,7 @@ export const clientLogin = action(client, "login", async (a_client, a_qid, a_qpa
     }
     return null;
 });
-export const clientLogoutThis = action(client, "logoutThie", async (a_client) => {
+export const clientLogoutThis = action(client, "logoutThis", async (a_client) => {
     unsbuscribeClient();
     a_client.set({});
     qid.set(0);

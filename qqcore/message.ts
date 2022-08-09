@@ -60,51 +60,48 @@ export class SavedMessage implements Quotable, Forwardable {
     }
     static fromMessage (msg: Message) {
         const smsg = new SavedMessage();
-        if (msg instanceof Message) {
-            smsg.time = msg.time;
-            smsg.message = msg.message;
-            smsg.nickname = msg.nickname;
-            smsg.message_id = msg.message_id;
-            smsg.seq = msg.seq;
-            smsg.rand = msg.rand;
-            if (msg instanceof PrivateMessage || msg instanceof GroupMessage || msg instanceof DiscussMessage) {
-                smsg.user_id = msg.sender.user_id;
-                smsg.nickname = msg.sender.nickname;
-                smsg.message_type = msg.message_type in TYPE_CODE_MAP ? msg.message_type : "unknown";
-                if (msg instanceof PrivateMessage || msg instanceof GroupMessage) {
-                    smsg.sub_type = msg.sub_type;
-                }
-                if (msg instanceof GroupMessage || msg instanceof DiscussMessage) {
-                    smsg.atme = msg.atme;
-                }
-                if (msg instanceof PrivateMessage) {
-                    smsg.group_id = msg.sender.user_id;
-                } else if (msg instanceof GroupMessage) {
-                    smsg.group_id = msg.group_id;
-                } else {
-                    smsg.group_id = msg.discuss_id;
-                }
+        smsg.time = msg.time;
+        smsg.message = msg.message;
+        smsg.nickname = msg.nickname;
+        smsg.message_id = msg.message_id;
+        smsg.seq = msg.seq;
+        smsg.rand = msg.rand;
+        if (msg instanceof PrivateMessage || msg instanceof GroupMessage || msg instanceof DiscussMessage) {
+            smsg.user_id = msg.sender.user_id;
+            smsg.nickname = msg.sender.nickname;
+            smsg.message_type = msg.message_type in TYPE_CODE_MAP ? msg.message_type : "unknown";
+            if (msg instanceof PrivateMessage || msg instanceof GroupMessage) {
+                smsg.sub_type = msg.sub_type;
+            }
+            if (msg instanceof GroupMessage || msg instanceof DiscussMessage) {
+                smsg.atme = msg.atme;
+            }
+            if (msg instanceof PrivateMessage) {
+                smsg.group_id = msg.sender.user_id;
+            } else if (msg instanceof GroupMessage) {
+                smsg.group_id = msg.group_id;
             } else {
-                smsg.user_id = msg.user_id;
-                smsg.group_id = 0;
-                smsg.nickname = msg.nickname;
+                smsg.group_id = msg.discuss_id;
             }
         } else {
-            // unknow message
-            return null;
+            smsg.user_id = msg.user_id;
+            smsg.group_id = 0;
+            smsg.nickname = msg.nickname;
         }
         return smsg;
     }
     static fromMessageReturn (
         msg: MessageRet,
-        uin: number,
+        sender: number,
+        group_id: number,
         message: MessageElem[],
         nickname = "",
         message_type: MessageType = "unknown",
         sub_type: MessageSubType = "unknown",
     ) {
         const smsg = new SavedMessage();
-        smsg.user_id = uin;
+        smsg.user_id = sender;
+        smsg.group_id = group_id;
         smsg.message_id = msg.message_id;
         smsg.time = msg.time;
         smsg.seq = msg.seq;

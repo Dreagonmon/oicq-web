@@ -7,7 +7,7 @@ import { URL } from "url";
 import { schema } from "../schema/schema.js";
 import { getPathInSrc } from "../utils/env.js";
 import { getMime } from "../utils/mime.js";
-import { ContextExtra, SubscribeContect } from "./context.js";
+import { ContextExtra, SubscribeContext } from "./context.js";
 import { getQQClient } from "./qqclient.js";
 
 type ServerOptionsWithExtra = ServerOptions<Record<string, unknown>, ContextExtra>;
@@ -15,7 +15,7 @@ type ServerOptionsWithExtra = ServerOptions<Record<string, unknown>, ContextExtr
 const server_options: ServerOptionsWithExtra = {
     schema,
     context: (ctx, msg) => {
-        const subscribeContext: SubscribeContect = { extra: ctx.extra, id: msg.id };
+        const subscribeContext: SubscribeContext = { extra: ctx.extra, id: msg.id };
         return subscribeContext;
     },
     onConnect: (ctx) => {

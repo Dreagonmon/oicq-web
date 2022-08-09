@@ -7,7 +7,7 @@ import { Subscribtion } from "./subscribe.js";
 import { SavedMessage } from "./message.js";
 import { combineId } from "../schema/types/node.js";
 import { setTimeout } from "timers/promises";
-import { createClient, Client, Platform, Message } from "oicq";
+import { createClient, Client, Platform, Message, Quotable, MessageElem, PrivateMessage } from "oicq";
 import { Low, JSONFile } from "lowdb";
 import log4js from "log4js";
 const logger = log4js.getLogger("qqclient");
@@ -59,6 +59,7 @@ export class QQClient {
         this.client = createClient(qid, {
             platform,
             log_level: "off",
+            ignore_self: false,
             cache_group_member: false,
             data_dir,
         });
@@ -99,9 +100,12 @@ export class QQClient {
             const extra = this.extra;
             const messageCallback = (async (evt: Message) => {
                 const message = SavedMessage.fromMessage(evt);
-                if (message !== null) {
-                    await this.appendMessage(message, message.user_id === this.client.uin ? 0 : 1);
-                }
+                await this.appendMessage(message, message.user_id === this.client.uin ? 0 : 1);
+            }).bind(this);
+            const selfMessageCallback = (async (evt: PrivateMessage) => {
+                const message = SavedMessage.fromMessage(evt);
+                message.group_id = evt.to_id;
+                await this.appendMessage(message, 0);
             }).bind(this);
             this.client.on("system.login.qrcode", (evt) => { extra.loginImage = evt.image; });
             this.client.on("system.login.slider", () => { extra.loginError = "请使用扫码登录!"; });
@@ -115,7 +119,7 @@ export class QQClient {
             this.client.on("system.offline.kickoff", () => { logger.info(`${this.client.uin} 踢下线`); });
             this.client.on("system.offline", () => { logger.info(`${this.client.uin} 下线`); });
             this.client.on("message", messageCallback);
-            this.client.on("sync.message", messageCallback);
+            this.client.on("sync.message", selfMessageCallback);
             this.client.on("sync.read.group", (evt) => {
                 const sessionId = SavedMessage.combineChatSessionId("group", evt.group_id);
                 this.markReadedLocal(sessionId);
@@ -178,10 +182,11 @@ export class QQClient {
             this.feedSubscribe(chatSessionId, msg);
         });
     }
-    async getMessage (chatSessionId: string, index = -1, count = 10) {
+    async getMessage (chatSessionId: string, index = -1, count = 15) {
         const db = this.extra.chatMessageDatabase.get(chatSessionId);
         const result: Array<SavedMessage> = [];
         if (db !== undefined && count > 0) {
+            count = Math.min(count, 50);
             if (index < 0) {
                 index = db.getSize() - count; // 取最后count条消息
                 index = Math.max(index, 0);
@@ -255,6 +260,42 @@ export class QQClient {
             session.unread = 0;
             this.feedSubscribe(this.getGlobalId(), this); // 聊天session发生变化
         }
+    }
+    async sendMessage (chatSessionId: string, content: MessageElem[], source?: Quotable) {
+        const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
+        if (type === "private") {
+            const msgRet = await this.client.pickUser(uin).sendMsg(content, source);
+            let retry = 3;
+            while (retry > 0) {
+                retry--;
+                await setTimeout(500);
+                const msgs = await this.client.pickUser(uin).getChatHistory(undefined, 5);
+                for (const pmsg of msgs) {
+                    if (pmsg.seq === msgRet.seq && pmsg.rand === msgRet.rand) {
+                        const msg = SavedMessage.fromMessage(pmsg);
+                        msg.group_id = pmsg.to_id;
+                        await this.appendMessage(msg);
+                        return true;
+                    }
+                }
+            }
+        } else if (type === "group") {
+            await this.client.pickGroup(uin).sendMsg(content, source);
+            // 不用添加到消息列表。，会收到Group消息
+            return true;
+        } else if (type === "discuss") {
+            const msgRet = await this.client.pickDiscuss(uin).sendMsg(content);
+            for (let i = 0; i < content.length; i++) {
+                if (content[i].type === "image") {
+                    content[i] = { type: "text", text: "[图片发送成功，但不支持保存讨论组图片记录]" };
+                }
+            }
+            const msg = SavedMessage.fromMessageReturn(msgRet, this.client.uin, uin, content, this.client.nickname, type);
+            await this.appendMessage(msg);
+            // QQ自己都放弃讨论组了，不支持了！
+            return true;
+        }
+        return false;
     }
     touch () {
         this.accessTime = Date.now() / 1_000;

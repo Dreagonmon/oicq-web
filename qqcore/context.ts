@@ -9,7 +9,7 @@ export interface ContextExtra extends Extra{
     qclient?: QQClient;
 }
 
-export interface SubscribeContect {
+export interface SubscribeContext {
     id: ID;
     extra: ContextExtra;
 }

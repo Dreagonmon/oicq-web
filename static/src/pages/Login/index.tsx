@@ -16,7 +16,7 @@ const Login: () => h.JSX.Element = () => {
             return "请输入正确的QQ号, 只支持数字";
         }
         if (!(/^.{6,32}$/).test(userPass)) {
-            return "请输入正确的用户密码, QQ密码可以留空, 仅在本应用使用";
+            return "请输入正确的用户密码, QQ密码可以留空, 用户密码仅在本应用使用";
         }
         return false;
     };

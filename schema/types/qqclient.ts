@@ -1,7 +1,7 @@
 import { GraphQLID, GraphQLString, GraphQLObjectType, GraphQLBoolean, GraphQLList, GraphQLInt } from "graphql";
 import { NodeType } from "./node.js";
 import { QQClient as _QQClient } from "../../qqcore/qqclient.js";
-import { SubscribeContect } from "../../qqcore/context.js";
+import { SubscribeContext } from "../../qqcore/context.js";
 
 export const ChatSession = new GraphQLObjectType({
     name: "ChatSession",
@@ -19,7 +19,7 @@ export const ChatSession = new GraphQLObjectType({
         },
         unread: {
             type: GraphQLInt,
-            resolve: (src, args, ctx: SubscribeContect) => {
+            resolve: (src, args, ctx: SubscribeContext) => {
                 if (typeof src === "string" && ctx.extra.qclient) {
                     src = ctx.extra.qclient.getChatSession(src);
                 }
@@ -31,7 +31,7 @@ export const ChatSession = new GraphQLObjectType({
         },
         title: {
             type: GraphQLString,
-            resolve: (src, args, ctx: SubscribeContect) => {
+            resolve: (src, args, ctx: SubscribeContext) => {
                 if (typeof src === "string" && ctx.extra.qclient) {
                     src = ctx.extra.qclient.getChatSession(src);
                 }
@@ -43,7 +43,7 @@ export const ChatSession = new GraphQLObjectType({
         },
         avatarUrl: {
             type: GraphQLString,
-            resolve: (src, args, ctx: SubscribeContect) => {
+            resolve: (src, args, ctx: SubscribeContext) => {
                 if (typeof src === "string" && ctx.extra.qclient) {
                     src = ctx.extra.qclient.getChatSession(src);
                 }
