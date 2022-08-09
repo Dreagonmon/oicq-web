@@ -51,6 +51,10 @@ export const loginResolver: GraphQLFieldResolver<undefined, SubscribeContect, Lo
                 client.extra.loginError = undefined;
             } else {
                 // 需要扫码登录？
+                if (client.extra.loginError) {
+                    // 登录错误，删除该客户端对象，下次重新登录
+                    removeQQClient(qid);
+                }
             }
             return client;
         }
