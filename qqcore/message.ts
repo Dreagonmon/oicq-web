@@ -33,9 +33,11 @@ export class SavedMessage implements Quotable, Forwardable {
     nickname: string;
     message_type: MessageType;
     sub_type: MessageSubType;
+    tmp_from: number;
     constructor () {
         this.user_id = 0; // sender
-        this.group_id = 0;
+        this.group_id = 0; // chat session id
+        this.tmp_from = 0; // 临时会话来源id
         this.message_id = "";
         this.time = 0;
         this.seq = 0;
@@ -78,6 +80,9 @@ export class SavedMessage implements Quotable, Forwardable {
             }
             if (msg instanceof PrivateMessage) {
                 smsg.group_id = msg.sender.user_id;
+                if (msg.sub_type === "group") {
+                    smsg.tmp_from = msg.sender.group_id ?? 0;
+                }
             } else if (msg instanceof GroupMessage) {
                 smsg.group_id = msg.group_id;
             } else {

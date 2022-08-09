@@ -39,6 +39,7 @@ interface QQClientStorage {
     userPassHash?: string;
     chatSessions: Array<string>;
     chatSessionMap: Record<string, ChatSession>;
+    chatFromMap: Record<number, number>;
 }
 
 /* equal to User in other system. */
@@ -82,6 +83,7 @@ export class QQClient {
             this.#storage.data = this.#storage?.data ?? {
                 chatSessions: [],
                 chatSessionMap: {},
+                chatFromMap: {},
             };
             if (this.#storage.data.userPassHash && this.#storage.data.userPassHash !== hashPassword(this.#userPass)) {
                 // 检查userPass是否发生变化，如变化则清空用户文件夹(为了安全)
@@ -128,6 +130,11 @@ export class QQClient {
                 const sessionId = SavedMessage.combineChatSessionId("private", evt.user_id);
                 this.markReadedLocal(sessionId);
             });
+            this.client.on("notice.friend.increase", (evt) => {
+                if (this.#storage.data && evt.user_id in this.#storage.data.chatFromMap) {
+                    delete this.#storage.data.chatFromMap[evt.user_id];
+                }
+            });
         });
     }
     async close () {
@@ -148,6 +155,25 @@ export class QQClient {
     }
     async appendMessage (msg: SavedMessage, unread = 0) {
         this.lock.do(async () => {
+            // 添加到临时会话列表
+            if (msg.message_type === "private") {
+                if (msg.sub_type === "friend" || msg.sub_type === "group" || msg.sub_type === "self") {
+                    if (msg.sub_type === "group") {
+                        if (msg.tmp_from <= 0) {
+                            return;
+                        }
+                        if (this.#storage.data) {
+                            this.#storage.data.chatFromMap[msg.group_id] = msg.tmp_from;
+                        }
+                    } else if (msg.sub_type === "friend") {
+                        if (this.#storage.data && msg.user_id in this.#storage.data.chatFromMap) {
+                            delete this.#storage.data.chatFromMap[msg.user_id];
+                        }
+                    }
+                } else {
+                    return; // not support other tmp chat.
+                }
+            }
             const chatSessionId = msg.getChatSessionId();
             let db = this.extra.chatMessageDatabase.get(chatSessionId);
             if (db === undefined) {
@@ -264,12 +290,16 @@ export class QQClient {
     async sendMessage (chatSessionId: string, content: MessageElem[], source?: Quotable) {
         const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
         if (type === "private") {
-            const msgRet = await this.client.pickUser(uin).sendMsg(content, source);
+            let user = this.client.pickUser(uin);
+            if (this.#storage.data && uin in this.#storage.data.chatFromMap) {
+                user = this.client.pickMember(this.#storage.data.chatFromMap[uin], uin);
+            }
+            const msgRet = await user.sendMsg(content, source);
             let retry = 3;
             while (retry > 0) {
                 retry--;
                 await setTimeout(500);
-                const msgs = await this.client.pickUser(uin).getChatHistory(undefined, 5);
+                const msgs = await user.getChatHistory(undefined, 5);
                 for (const pmsg of msgs) {
                     if (pmsg.seq === msgRet.seq && pmsg.rand === msgRet.rand) {
                         const msg = SavedMessage.fromMessage(pmsg);
