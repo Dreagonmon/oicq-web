@@ -12,7 +12,7 @@ export const ChatSession = new GraphQLObjectType({
             resolve: (src) => {
                 if (typeof src === "string") {
                     return src;
-                } else if (typeof src.sessionId == "string") {
+                } else if (typeof src?.sessionId == "string") {
                     return src.sessionId;
                 }
             },
@@ -33,7 +33,7 @@ export const ChatSession = new GraphQLObjectType({
             type: GraphQLString,
             resolve: (src, args, ctx: SubscribeContext) => {
                 if (typeof src === "string" && ctx.extra.qclient) {
-                    src = ctx.extra.qclient.getChatSession(src);
+                    return ctx.extra.qclient.getChatSessionName(src);
                 }
                 if (typeof src?.title === "string") {
                     return src.title;
@@ -45,7 +45,7 @@ export const ChatSession = new GraphQLObjectType({
             type: GraphQLString,
             resolve: (src, args, ctx: SubscribeContext) => {
                 if (typeof src === "string" && ctx.extra.qclient) {
-                    src = ctx.extra.qclient.getChatSession(src);
+                    return ctx.extra.qclient.getChatSessionAvatar(src);
                 }
                 if (typeof src?.avatarUrl === "string") {
                     return src.avatarUrl;

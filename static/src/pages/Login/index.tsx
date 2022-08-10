@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { useState } from "preact/hooks";
+import { useState, useCallback } from "preact/hooks";
 import { changeValue } from "../../utils/htmlevent";
 import { clientLogin } from "../../stores";
 
@@ -11,20 +11,12 @@ const Login: () => h.JSX.Element = () => {
     const [qrCode, setQrCode] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const inputHasError = () => {
+    const doLogin = useCallback(async () => {
         if (!(/^\d{6,12}$/).test(qid)) {
-            return "请输入正确的QQ号, 只支持数字";
-        }
-        if (!(/^.{6,32}$/).test(userPass)) {
-            return "请输入正确的用户密码, QQ密码可以留空, 用户密码仅在本应用使用";
-        }
-        return false;
-    };
-
-    const doLogin = async () => {
-        const errMsg = inputHasError();
-        if (errMsg) {
-            setErrorMsg(errMsg);
+            setErrorMsg("请输入正确的QQ号, 只支持数字");
+            return;
+        } else if (!(/^.{6,32}$/).test(userPass)) {
+            setErrorMsg("请输入正确的用户密码, QQ密码可以留空, 用户密码仅在本应用使用");
             return;
         } else if (errorMsg.length > 0) {
             setErrorMsg("");
@@ -45,12 +37,12 @@ const Login: () => h.JSX.Element = () => {
                 setErrorMsg("登录失败, 请检查您的登录信息");
             }
         } catch {
-            setErrorMsg("登录失败，请检查网络连接并确认服务器在线");
+            setErrorMsg("登录失败，请检查网络连接");
         } finally {
             setLoading(false);
         }
         //
-    };
+    }, [errorMsg, qPass, qid, userPass]);
 
     return <div className="w-full h-full flex flex-col items-center">
         <div className="w-full h-full sm:max-w-sm flex sm:items-center sm:overflow-y-auto">
@@ -72,7 +64,7 @@ const Login: () => h.JSX.Element = () => {
                 {qrCode.length > 0 ? <div className="flex-none pt-2 flex flex-col items-center">
                     <img src={qrCode} />
                 </div> : null}
-                {qrCode.length > 0 ? <div className="flex-none pt-2">请使用手机QQ扫描二维码, 确认登录, 然后再次点击下面的登录按钮</div> : null}
+                {qrCode.length > 0 ? <div className="flex-none pt-2">请使用手机QQ扫描二维码, 确认登录, 然后<span class="font-bold text-xl text-red-600">再次</span>点击下面的登录按钮</div> : null}
                 <div className="pt-2 sm:flex-auto flex flex-col items-center">
                     <button className="btn btn-primary w-16" onClick={doLogin} disabled={loading}>登录</button>
                 </div>

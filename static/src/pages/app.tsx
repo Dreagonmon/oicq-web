@@ -7,7 +7,7 @@ import Chat from "./Chat";
 import { usePartStore } from "../hooks/partStore";
 import { QQClient } from "../types/QQClient";
 
-const CLIENT_ATTR_LIST = ["isOnline"];
+const CLIENT_ATTR_LIST = ["isOnline"] as (keyof QQClient)[];
 
 const App = () => {
     const client = usePartStore<QQClient>(clientStore, CLIENT_ATTR_LIST);
@@ -22,7 +22,7 @@ const App = () => {
         }
         const handler = setTimeout(() => {
             setLoading(false);
-        }, 2000);
+        }, 1000);
         return () => {
             clearTimeout(handler);
         };
@@ -30,7 +30,7 @@ const App = () => {
 
     return <div id="app" className="w-full h-full">
         <Header />
-        {loading ? null : <div className="pt-16 w-full h-full overflow-hidden flex flex-col bg-gray-100">
+        {loading ? null : <div className="pt-16 w-full h-full overflow-hidden flex flex-col bg-white">
             {client.isOnline ? <Chat /> : <Login />}
             {/* <Test /> */}
         </div>}

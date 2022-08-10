@@ -1,8 +1,8 @@
 export interface ChatSession {
-    id?: string;
-    unread?: number;
-    title?: string;
-    avatarUrl?: string;
+    id: string;
+    unread: number;
+    title: string;
+    avatarUrl: string;
 }
 
 export interface QQClient {

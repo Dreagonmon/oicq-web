@@ -1,5 +1,7 @@
 type Query {
   client: QQClient
+  message(chatSessionId: String!, fromRecordId: Int!, count: Int!): [Message]
+  messageAvatar(sender: String!): String
 }
 
 type QQClient implements Node {
@@ -23,11 +25,35 @@ type ChatSession implements Node {
   avatarUrl: String
 }
 
+type Message {
+  recordId: Int
+  atMe: Boolean
+  sender: String
+  time: String
+  seq: String
+  rand: String
+  nickname: String
+  message: String
+}
+
 type Mutation {
-  login(qid: String, qPass: String, userPass: String): QQClient
+  login(qid: String!, qPass: String, userPass: String!): QQClient
   logout: Boolean
+  sendTextMessage(chatSessionId: String!, content: String!, source: Quotable): Boolean
+  sendImageMessage(chatSessionId: String!, content: String!, source: Quotable): Boolean
+  markRead(chatSessionId: String!): Boolean
+}
+
+"""回复消息引用, 只在发送Text类型的消息时起作用, 图片等类型的消息不能回复它人"""
+input Quotable {
+  sender: String!
+  time: String!
+  seq: String!
+  rand: String!
+  message: String!
 }
 
 type Subscription {
+  message(chatSessionId: String!): Message
   client: QQClient
 }

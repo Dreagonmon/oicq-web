@@ -26,14 +26,14 @@ let lastCleanTime = 0;
 export interface ChatSession {
     sessionId: string;
     unread: number;
-    title?: string;
-    avatarUrl?: string;
 }
 export interface QQClientExtra {
     loginImage?: Buffer;
     loginError?: string;
     subscribtions: Array<Subscribtion<unknown>>;
     chatMessageDatabase: Map<string, AppendOnlyDatabase<Buffer>>;
+    chatSessionName: Map<string, string>;
+    chatSessionAvatar: Map<string, string>;
 }
 interface QQClientStorage {
     userPassHash?: string;
@@ -68,6 +68,8 @@ export class QQClient {
         this.extra = {
             subscribtions: [],
             chatMessageDatabase: new Map(),
+            chatSessionName: new Map(),
+            chatSessionAvatar: new Map(),
         };
         this.accessTime = Date.now() / 1_000;
         this.#userPass = userPass;
@@ -89,6 +91,8 @@ export class QQClient {
                 // 检查userPass是否发生变化，如变化则清空用户文件夹(为了安全)
                 await clearDirPromise(this.client.dir);
                 this.#storage.data.chatSessions = [];
+                this.#storage.data.chatSessionMap = {};
+                this.#storage.data.chatFromMap = {};
                 logger.debug(`${this.client.dir} cleared.`);
             }
             this.#storage.data.userPassHash = hashPassword(this.#userPass);
@@ -238,32 +242,66 @@ export class QQClient {
         }
     }
     getChatSession (chatSessionId: string) {
-        const session = this.#storage.data?.chatSessionMap[chatSessionId];
-        if (session) {
-            if (session.title === undefined && session.avatarUrl === undefined) {
-                const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
-                session.avatarUrl = "";
-                session.title = uin.toString();
-                try {
-                    if (type == "private") {
-                        const user = this.client.pickUser(uin);
-                        session.avatarUrl = user.getAvatarUrl();
-                        session.title = user.asFriend().nickname ?? uin.toString();
-                    } else if (type == "group") {
-                        const group = this.client.pickGroup(uin);
-                        session.avatarUrl = group.getAvatarUrl();
-                        session.title = group.name ?? uin.toString();
-                    }
-                } catch {
-                    // 出问题了，下次再尝试
-                    session.avatarUrl = undefined;
-                    session.title = undefined;
-                }
-            }
-            return session;
+        const chatSession = this.#storage.data?.chatSessionMap[chatSessionId];
+        if (chatSession) {
+            return chatSession;
         } else {
             return null;
         }
+    }
+    getChatSessionName (chatSessionId: string) {
+        const savedName = this.extra.chatSessionName.get(chatSessionId);
+        if (savedName) return savedName;
+        const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
+        if (type === "private") {
+            let name = undefined as string | undefined;
+            if (this.#storage.data && uin in this.#storage.data.chatFromMap) {
+                const user = this.client.pickMember(this.#storage.data.chatFromMap[uin], uin);
+                name = user.asFriend().nickname ?? user.info?.nickname;
+            } else {
+                const user = this.client.pickFriend(uin);
+                name = user.nickname ?? user.info?.nickname;
+            }
+            if (name) {
+                this.extra.chatSessionName.set(chatSessionId, name);
+                return name;
+            } else {
+                (async () => {
+                    const info = await this.client.pickUser(uin).getSimpleInfo();
+                    this.extra.chatSessionName.set(chatSessionId, info.nickname);
+                    this.feedSubscribe(this.getGlobalId(), this);
+                })();
+            }
+        } else if (type === "group") {
+            const group = this.client.pickGroup(uin);
+            const name = group.name ?? group.info?.group_name ?? uin.toString();
+            this.extra.chatSessionName.set(chatSessionId, name);
+            return name;
+        } else {
+            this.extra.chatSessionName.set(chatSessionId, uin.toString());
+        }
+        return uin.toString();
+    }
+    getChatSessionAvatar (chatSessionId: string) {
+        const savedAvatar = this.extra.chatSessionAvatar.get(chatSessionId);
+        if (savedAvatar) return savedAvatar;
+        let avatar = "";
+        const [type, uin] = SavedMessage.splitChatSessionId(chatSessionId);
+        if (type === "private") {
+            avatar = this.client.pickUser(uin).getAvatarUrl();
+        } else if (type === "group") {
+            avatar = this.client.pickGroup(uin).getAvatarUrl();
+        }
+        this.extra.chatSessionAvatar.set(chatSessionId, avatar);
+        return avatar;
+    }
+    getUserAvatar (uin: number) {
+        const chatSessionId = SavedMessage.combineChatSessionId("private", uin);
+        const savedAvatar = this.extra.chatSessionAvatar.get(chatSessionId);
+        if (savedAvatar) return savedAvatar;
+        const avatar = this.client.pickUser(uin).getAvatarUrl();
+        this.extra.chatSessionAvatar.set(chatSessionId, avatar);
+        return avatar;
     }
     markReadedLocal (chatSessionId: string) {
         const session = this.getChatSession(chatSessionId);

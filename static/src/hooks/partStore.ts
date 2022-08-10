@@ -1,7 +1,7 @@
 import { MapStore } from "nanostores";
 import { useEffect, useRef, useState } from "preact/hooks";
 
-export const usePartStore = <T>(store: MapStore, keys: Array<string>) => {
+export const usePartStore = <T>(store: MapStore, keys: Array<keyof T>) => {
     const [value, setValue] = useState(store.get() as T);
     const lastValueRef = useRef(value);
     useEffect(() => {

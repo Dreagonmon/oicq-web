@@ -1,5 +1,5 @@
 //https://github.com/enisdenjo/graphql-ws
-import { GraphQLSchema, GraphQLObjectType, GraphQLBoolean, GraphQLList } from "graphql";
+import { GraphQLSchema, GraphQLObjectType, GraphQLBoolean, GraphQLList, GraphQLString } from "graphql";
 import { QQClient } from "./types/qqclient.js";
 import { Message } from "./types/message.js";
 import {
@@ -17,7 +17,9 @@ import {
 import { clientResolver as qQQClientClientResolver } from "./query/qqclient.js";
 import {
     messageResolver as qMessageResolver,
+    messageAvatarResolver as qMessageAvatarResolver,
     MessageInput as QMessageInput,
+    MessageSenderInput as QMessageSenderArgs,
 } from "./query/message.js";
 import { clientSubscripter as sQQClientSubscripter } from "./subscription/qqclient.js";
 import {
@@ -68,6 +70,11 @@ export const schema = new GraphQLSchema({
                 type: new GraphQLList(Message),
                 args: QMessageInput,
                 resolve: qMessageResolver,
+            },
+            messageAvatar: {
+                type: GraphQLString,
+                args: QMessageSenderArgs,
+                resolve: qMessageAvatarResolver,
             },
         },
     }),

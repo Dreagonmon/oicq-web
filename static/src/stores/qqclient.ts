@@ -3,6 +3,8 @@ import { qid, userPass } from "./saved";
 import { request, getClient } from "../utils/graphql";
 import { QQClient } from "../types/QQClient";
 
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
 const GQL_LOGIN = `#graphql
 mutation Login($qid: String!, $qPass: String, $userPass: String!) {
     login(qid: $qid, qPass: $qPass, userPass: $userPass) {
@@ -43,7 +45,9 @@ interface GQL_SUBSCRIPTION_RESULT {
 const EMPTY_PARAMS = {};
 
 let subscriptionCancel: (() => void) | null = null;
+let shouldReconnect = false;
 const unsbuscribeClient = () => {
+    shouldReconnect = false;
     if (subscriptionCancel) {
         subscriptionCancel();
     }
@@ -62,27 +66,31 @@ const subscribeClient = () => {
             error: (error) => {
                 console.debug(error);
             },
-            complete: () => {
-                subscriptionCancel = null;
+            complete: async () => {
+                if (shouldReconnect) {
+                    await sleep(30000);
+                    if (shouldReconnect) subscribeClient();
+                } else {
+                    subscriptionCancel = null;
+                }
             },
         });
     };
     subscriptionCancel = doSubscribe();
+    shouldReconnect = true;
 };
 
 // store
 export const client = map<QQClient>({});
 
 // action
-export const clientLogin = action(client, "login", async (a_client, a_qid, a_qpass, a_upass) => {
+export const clientLogin = action(client, "login", async (a_client, a_qid: string, a_qpass: string, a_upass: string) => {
     const res = await request<GQL_LOGIN_RESULT>(GQL_LOGIN, { qid: a_qid, qPass: a_qpass, userPass: a_upass });
     if (res.data && res.data.login) {
         if (res.data.login.isOnline) {
             qid.set(Number.parseInt(a_qid, 10));
             userPass.set(a_upass);
             subscribeClient(); // will set client
-        } else {
-            a_client.set(res.data.login);
         }
         return res.data.login;
     }
