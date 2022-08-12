@@ -6,6 +6,7 @@ import Login from "./Login";
 import Chat from "./Chat";
 import { usePartStore } from "../hooks/partStore";
 import { QQClient } from "../types/QQClient";
+import { allTasks } from "nanostores";
 
 const CLIENT_ATTR_LIST = ["isOnline"] as (keyof QQClient)[];
 
@@ -16,17 +17,12 @@ const App = () => {
 
     useEffect(() => {
         // wait client init.
-        if (client.isOnline) {
+        allTasks().then(() => {
             setLoading(false);
-            return;
-        }
-        const handler = setTimeout(() => {
+        }).catch(() => {
             setLoading(false);
-        }, 1000);
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [client]); // only run once
+        });
+    }, []); // only run once
 
     return <div id="app" className="w-full h-full">
         <Header />

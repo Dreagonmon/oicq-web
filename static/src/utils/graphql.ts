@@ -2,9 +2,9 @@ import { createClient, Client, ExecutionResult } from "graphql-ws";
 import { qid, userPass } from "../stores";
 
 const RESPONSE_TIMEOUT = 1000;
-const ACK_INTERVAL = 60000;
+const ACK_INTERVAL = 18000;
 const IDEL_TIMEOUT = 60000;
-const RETRY = 3;
+const RETRY = 5;
 
 let client: undefined | Client;
 const url = (() => {

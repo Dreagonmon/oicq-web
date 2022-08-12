@@ -19,7 +19,7 @@ const Header = () => {
 
     return <header className="bg-sky-500 text-white fixed left-0 top-0 w-full h-16 shadow-float flex flex-row items-center z-50 overflow-x-hidden overflow-y-hidden">
         <span className="grow-0 w-96 flex items-center">
-            <span class="text-xl px-8">QQ Lite</span>
+            <span class="text-xl px-8">OICQ Web</span>
             <span class="flex-auto" />
             { client.isOnline ?
                 <button className="btn btn-warning mr-4" onClick={clientLogoutThis}>退出当前设备</button>

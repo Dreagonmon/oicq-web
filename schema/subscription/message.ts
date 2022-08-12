@@ -19,7 +19,6 @@ export const messageSubscripter: (src: undefined, args: MessageArgs, ctx: Subscr
         const sub = ctx.extra.qclient.createSubscribe<SavedMessage>(resId, ctx.id);
         while (ctx.extra?.qclient) {
             try {
-                ctx.extra.qclient.touch();
                 const message = await sub.waitNext();
                 if (message) {
                     yield message;

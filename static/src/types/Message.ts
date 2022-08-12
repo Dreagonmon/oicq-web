@@ -8,3 +8,11 @@ export interface Message {
     nickname: string,
     message: string,
 }
+
+export interface MessageElement {
+    type: string,
+    text?: string,
+    url?: string,
+    qq?: number,
+    id?: number,
+}

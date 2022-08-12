@@ -18,8 +18,8 @@ import { open, access, readFile, writeFile, FileHandle } from "fs/promises";
 import { setTimeout, clearTimeout } from "timers";
 
 const COMMIT_DELAY = 500; // ms
-const MAX_CACHE_SIZE = 128;
-const INDEX_INIT_SIZE = 128;
+const MAX_CACHE_SIZE = 32;
+const INDEX_INIT_SIZE = 32;
 
 class AppendOnlyDatabaseIndex {
     #indexPath: string;

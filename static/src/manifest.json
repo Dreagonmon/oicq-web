@@ -1,6 +1,6 @@
 {
-  "name": "QQ Lite",
-  "short_name": "qqlite",
+  "name": "OICQ Web",
+  "short_name": "QQ Web",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
