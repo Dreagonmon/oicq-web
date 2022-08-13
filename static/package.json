@@ -35,6 +35,7 @@
   "dependencies": {
     "@nanostores/preact": "^0.2.1",
     "@tailwindcss/forms": "^0.4.0",
+    "graphql": "^16.5.0",
     "graphql-ws": "^5.9.1",
     "luxon": "^3.0.1",
     "nanostores": "^0.6.0",
