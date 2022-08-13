@@ -12,7 +12,9 @@ export interface Message {
 export interface MessageElement {
     type: string,
     text?: string,
+    file?: string,
     url?: string,
     qq?: number,
     id?: number,
+    asface?: boolean,
 }

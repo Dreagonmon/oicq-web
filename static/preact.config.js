@@ -18,16 +18,18 @@ export default (config, env, helpers, options) => {
         //         target: 'http://127.0.0.1:4000',
         //     }
         // ];
+    } else {
+        // 
     }
-    let resolve_obj = config["resolve"] || {}
-    let alias_obj = resolve_obj["alias"] || {}
+    let resolve_obj = config["resolve"] || {};
+    let alias_obj = resolve_obj["alias"] || {};
     alias_obj = {
         ...alias_obj,
-        "react": "preact/compat",
+        react: "preact/compat",
         "react-dom/test-utils": "preact/test-utils",
         "react-dom": "preact/compat",     // Must be below test-utils
         "react/jsx-runtime": "preact/jsx-runtime",
-    }
-    resolve_obj["alias"] = alias_obj
-    config["resolve"] = resolve_obj
+    };
+    resolve_obj["alias"] = alias_obj;
+    config["resolve"] = resolve_obj;
 };

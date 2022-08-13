@@ -1,5 +1,5 @@
 import { GraphQLFieldConfigArgumentMap, GraphQLFieldResolver, GraphQLInputObjectType, GraphQLNonNull, GraphQLString } from "graphql";
-import { ImageElem, Quotable, TextElem } from "oicq";
+import { FaceElem, ImageElem, MessageElem, Quotable, TextElem } from "oicq";
 import { SubscribeContext } from "../../qqcore/context.js";
 
 export interface QuotableArgs {
@@ -55,7 +55,13 @@ const parseQuotable = (from: QuotableArgs) => {
 
 export const messageSendTextResolver: GraphQLFieldResolver<undefined, SubscribeContext, MessageSendArgs, Promise<boolean>> = async (src, args, ctx) => {
     if (ctx.extra?.qclient) {
-        const messageElements: TextElem[] = [{ type: "text", text: args.content }];
+        const elements = JSON.parse(args.content) as MessageElem[];
+        const messageElements: (TextElem | FaceElem | ImageElem)[] = [];
+        elements.forEach((item) => {
+            if (item.type === "text" || item.type === "face" || item.type === "image") {
+                messageElements.push(item);
+            }
+        });
         if (args.source) {
             return await ctx.extra.qclient.sendMessage(args.chatSessionId, messageElements, parseQuotable(args.source));
         } else {
@@ -67,6 +73,13 @@ export const messageSendTextResolver: GraphQLFieldResolver<undefined, SubscribeC
 
 export const messageSendImageResolver: GraphQLFieldResolver<undefined, SubscribeContext, MessageSendArgs, Promise<boolean>> = async (src, args, ctx) => {
     if (ctx.extra?.qclient) {
+        // const elements = JSON.parse(args.content) as MessageElem[];
+        // const imgs: ImageElem[] = [];
+        // elements.forEach((item) => {
+        //     if (item.type === "image") {
+        //         imgs.push(item);
+        //     }
+        // });
         const imgs: ImageElem[] = [{ type: "image", file: Buffer.from(args.content, "base64") }];
         return await ctx.extra.qclient.sendMessage(args.chatSessionId, imgs);
     }

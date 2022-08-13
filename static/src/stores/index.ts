@@ -5,5 +5,5 @@ export { selectedChat, selectedChatMessages, senderAvatars } from "./message";
 
 // action
 export { clientLogin, clientLogoutThis, clientLogoutAll } from "./qqclient";
-export { selectChat, fetchMessageBefore, updateSenderAvatar } from "./message";
+export { selectChat, fetchMessageBefore, updateSenderAvatar, markRead, sendTextMessage } from "./message";
 

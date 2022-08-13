@@ -17,9 +17,9 @@ const App = () => {
 
     useEffect(() => {
         // wait client init.
-        allTasks().then(() => {
-            setLoading(false);
-        }).catch(() => {
+        (async () => {
+            await allTasks();
+        })().finally(() => {
             setLoading(false);
         });
     }, []); // only run once

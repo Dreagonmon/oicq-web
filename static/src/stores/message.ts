@@ -1,6 +1,6 @@
 import { action, atom, map } from "nanostores";
 import { client } from "./qqclient";
-import { Message } from "../types/Message";
+import { Message, MessageElement } from "../types/Message";
 import { getClient, request } from "../utils/graphql";
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -47,6 +47,21 @@ query QueryMessage ($chatSessionId: String!, $fromRecordId: Int!, $count: Int!) 
     }
 }`;
 
+const GQL_MUTATION_MARK_READ = `#graphql
+mutation MarkRead ($chatSessionId: String!) {
+    markRead (chatSessionId: $chatSessionId)
+}`;
+
+const GQL_MUTATION_SEND_TEXT = `#graphql
+mutation SendText ($chatSessionId: String!, $content: String!) {
+    sendTextMessage (chatSessionId: $chatSessionId, content: $content)
+}`;
+
+const GQL_MUTATION_SEND_IMAGE = `#graphql
+mutation SendText ($chatSessionId: String!, $content: String!) {
+    sendImageMessage (chatSessionId: $chatSessionId, content: $content)
+}`;
+
 const GQL_QUERY_MESSAGE_AVATAR = `#graphql
 query QueryAvatar ($sender: String!) {
     messageAvatar (sender: $sender)
@@ -58,6 +73,18 @@ interface GQLSubscriptionMessageResult {
 
 interface GQLQueryMessageResult {
     message?: Message[];
+}
+
+interface GQLMarkReadResult {
+    markRead?: boolean;
+}
+
+interface GQLSendTextResult {
+    sendTextMessage?: boolean;
+}
+
+interface GQLSendImageResult {
+    sendImageMessage?: boolean;
 }
 
 interface GQLQueryMessageAvatarResult {
@@ -173,6 +200,27 @@ export const updateSenderAvatar = action(senderAvatars, "updateSenderAvatar", as
     return undefined;
 });
 
+export const markRead = action(selectedChat, "markRead", async () => {
+    const chatId = selectedChatId.get();
+    const res = await request<GQLMarkReadResult>(GQL_MUTATION_MARK_READ, { chatSessionId: chatId });
+    if (res.data && res.data.markRead) {
+        return true;
+    }
+    return false;
+});
+
+export const sendTextMessage = action(selectedChatMessages, "sendTextMessage", async (store, content: MessageElement[]) => {
+    const params = {
+        chatSessionId: selectedChatId.get(),
+        content: JSON.stringify(content),
+    };
+    const res = await request<GQLSendTextResult>(GQL_MUTATION_SEND_TEXT, params);
+    if (res.data && res.data.sendTextMessage) {
+        return true;
+    }
+    return false;
+});
+
 // event
 const computeSelectedChatMessage = (chatId: string) => {
     if (chatId === "") return;
@@ -181,6 +229,7 @@ const computeSelectedChatMessage = (chatId: string) => {
     }
     selectedChatMessages.set(messageStorage[chatId]);
     subscribeMessage();
+    markRead();
 };
 const computeSelectedChat = () => {
     const c = client.get();

@@ -377,7 +377,7 @@
 
 "@babel/plugin-proposal-nullish-coalescing-operator@^7.16.7":
   version "7.16.7"
-  resolved "https://mirrors.tencent.com/npm/@babel%2fplugin-proposal-nullish-coalescing-operator/-/plugin-proposal-nullish-coalescing-operator-7.16.7.tgz#141fc20b6857e59459d430c850a0011e36561d99"
+  resolved "https://mirrors.tencent.com/npm/@babel%2fplugin-proposal-nullish-coalescing-operator/-/plugin-proposal-nullish-coalescing-operator-7.16.7.tgz"
   integrity sha512-aUOrYU3EVtjf62jQrCj63pYZ7k6vns2h/DQvHPWGmsJRYzWXZ6/AsfgpiRy6XiuIDADhJzP2Q9MwSMKauBQ+UQ==
   dependencies:
     "@babel/helper-plugin-utils" "^7.16.7"
@@ -412,7 +412,7 @@
 
 "@babel/plugin-proposal-optional-chaining@^7.16.7":
   version "7.16.7"
-  resolved "https://mirrors.tencent.com/npm/@babel%2fplugin-proposal-optional-chaining/-/plugin-proposal-optional-chaining-7.16.7.tgz#7cd629564724816c0e8a969535551f943c64c39a"
+  resolved "https://mirrors.tencent.com/npm/@babel%2fplugin-proposal-optional-chaining/-/plugin-proposal-optional-chaining-7.16.7.tgz"
   integrity sha512-eC3xy+ZrUcBtP7x+sq62Q/HYd674pPTb/77XZMb5wbDPGWIdUbSr4Agr052+zaUPSb+gGRnjxXfKFvx5iMJ+DA==
   dependencies:
     "@babel/helper-plugin-utils" "^7.16.7"
@@ -1249,7 +1249,7 @@
 
 "@nanostores/preact@^0.2.1":
   version "0.2.1"
-  resolved "https://mirrors.cloud.tencent.com/npm/@nanostores%2fpreact/-/preact-0.2.1.tgz#c8b1b6343ebf22ab086919b775107ddee6e09358"
+  resolved "https://mirrors.cloud.tencent.com/npm/@nanostores%2fpreact/-/preact-0.2.1.tgz"
   integrity sha512-tCT10bBrO6qtzfShQbQL10yLwpGkdRxpknFuI6drkXkFYNs0LFIHQXgTr7jShcnlbQnhOSBIPtSnCVwKd/HvFA==
 
 "@nodelib/fs.scandir@2.1.5":
@@ -2562,7 +2562,7 @@ binary-extensions@^2.0.0:
 
 bindings@^1.5.0:
   version "1.5.0"
-  resolved "https://mirrors.tencent.com/npm/bindings/-/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
+  resolved "https://mirrors.cloud.tencent.com/npm/bindings/-/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
   integrity sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==
   dependencies:
     file-uri-to-path "1.0.0"
@@ -4884,7 +4884,7 @@ file-loader@^6.2.0:
 
 file-uri-to-path@1.0.0:
   version "1.0.0"
-  resolved "https://mirrors.tencent.com/npm/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz#553a7b8446ff6f684359c445f1e37a05dacc33dd"
+  resolved "https://mirrors.cloud.tencent.com/npm/file-uri-to-path/-/file-uri-to-path-1.0.0.tgz#553a7b8446ff6f684359c445f1e37a05dacc33dd"
   integrity sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==
 
 filelist@^1.0.1:
@@ -5115,7 +5115,7 @@ fs.realpath@^1.0.0:
 
 fsevents@^1.2.7:
   version "1.2.13"
-  resolved "https://mirrors.tencent.com/npm/fsevents/-/fsevents-1.2.13.tgz#f325cb0455592428bcf11b383370ef70e3bfcc38"
+  resolved "https://mirrors.cloud.tencent.com/npm/fsevents/-/fsevents-1.2.13.tgz#f325cb0455592428bcf11b383370ef70e3bfcc38"
   integrity sha512-oWb1Z6mkHIskLzEJ/XWX0srkpkTQ7vaopMQkyaEIoq0fmtFVxOthb8cCxeT+p3ynTdkk/RZwbgG4brR5BeWECw==
   dependencies:
     bindings "^1.5.0"
@@ -5123,7 +5123,7 @@ fsevents@^1.2.7:
 
 fsevents@^2.3.2, fsevents@~2.3.2:
   version "2.3.2"
-  resolved "https://mirrors.tencent.com/npm/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
+  resolved "https://mirrors.cloud.tencent.com/npm/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
   integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
 
 function-bind@^1.1.1:
@@ -5326,7 +5326,7 @@ graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2, graceful-fs@^4.1.6
 
 graphql-ws@^5.9.1:
   version "5.9.1"
-  resolved "https://mirrors.cloud.tencent.com/npm/graphql-ws/-/graphql-ws-5.9.1.tgz#9c0fa48ceb695d61d574ed3ab21b426729e87f2d"
+  resolved "https://mirrors.cloud.tencent.com/npm/graphql-ws/-/graphql-ws-5.9.1.tgz"
   integrity sha512-mL/SWGBwIT9Meq0NlfS55yXXTOeWPMbK7bZBEZhFu46bcGk1coTx2Sdtzxdk+9yHWngD+Fk1PZDWaAutQa9tpw==
 
 gzip-size@^6.0.0:
@@ -7132,7 +7132,7 @@ lru-cache@^6.0.0:
 
 luxon@^3.0.1:
   version "3.0.1"
-  resolved "https://mirrors.cloud.tencent.com/npm/luxon/-/luxon-3.0.1.tgz#6901111d10ad06fd267ad4e4128a84bef8a77299"
+  resolved "https://mirrors.cloud.tencent.com/npm/luxon/-/luxon-3.0.1.tgz"
   integrity sha512-hF3kv0e5gwHQZKz4wtm4c+inDtyc7elkanAsBq+fundaCdUBNJB1dHEGUZIM6SfSBUlbVFduPwEtNjFK8wLtcw==
 
 magic-string@^0.25.0, magic-string@^0.25.7:
@@ -7494,9 +7494,9 @@ multicast-dns@^6.0.1:
     thunky "^1.0.2"
 
 nan@^2.12.1:
-  version "2.15.0"
-  resolved "https://mirrors.tencent.com/npm/nan/-/nan-2.15.0.tgz#3f34a473ff18e15c1b5626b62903b5ad6e665fee"
-  integrity sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ==
+  version "2.16.0"
+  resolved "https://mirrors.cloud.tencent.com/npm/nan/-/nan-2.16.0.tgz#664f43e45460fb98faf00edca0bb0d7b8dce7916"
+  integrity sha512-UdAqHyFngu7TfQKsCBgAA6pWDkT8MAO7d0jyOecVhN5354xbLqdn8mV9Tat9gepAupm0bt2DbeaSC8vS52MuFA==
 
 nanoid@^3.3.1:
   version "3.3.1"
@@ -7522,7 +7522,7 @@ nanomatch@^1.2.9:
 
 nanostores@^0.6.0:
   version "0.6.0"
-  resolved "https://mirrors.cloud.tencent.com/npm/nanostores/-/nanostores-0.6.0.tgz#2eb82c611843fc01a04ddc19e5b4853aa015e71c"
+  resolved "https://mirrors.cloud.tencent.com/npm/nanostores/-/nanostores-0.6.0.tgz"
   integrity sha512-CQpKE8wtaJAr66hbg32t0MOAeybzLywU6UsLAX18kyQL/bME+xwhjWpmrvJRBp5kueFy6hs2oHlt3HFpNP+JaA==
 
 native-url@0.3.4:
@@ -8798,14 +8798,14 @@ preact-cli@^3.3.5:
 
 preact-render-to-string@^5.2.1:
   version "5.2.1"
-  resolved "https://mirrors.cloud.tencent.com/npm/preact-render-to-string/-/preact-render-to-string-5.2.1.tgz#71f3e8cda65f33dbc8ad8d904ff58e3f532e59f3"
+  resolved "https://mirrors.cloud.tencent.com/npm/preact-render-to-string/-/preact-render-to-string-5.2.1.tgz"
   integrity sha512-Wp3ner1aIVBpKg02C4AoLdBiw4kNaiFSYHr4wUF+fR7FWKAQzNri+iPfPp31sEhAtBfWoJrSxiEFzd5wp5zCgQ==
   dependencies:
     pretty-format "^3.8.0"
 
 preact@^10.10.1:
   version "10.10.1"
-  resolved "https://mirrors.cloud.tencent.com/npm/preact/-/preact-10.10.1.tgz#df67e4348f50fc6ad2e11e813553f15c6543176b"
+  resolved "https://mirrors.cloud.tencent.com/npm/preact/-/preact-10.10.1.tgz"
   integrity sha512-cXljG59ylGtSLismoLojXPAGvnh2ipQr3BYz9KZQr+1sdASCT+sR/v8dSMDS96xGCdtln2wHfAHCnLJK+XcBNg==
 
 prelude-ls@^1.2.1:
